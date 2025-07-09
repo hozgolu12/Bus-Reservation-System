@@ -190,6 +190,7 @@ export default function Routes() {
                   <Input
                     id="date"
                     type="date"
+                    min={new Date().toISOString().split('T')[0]}
                     value={searchDate}
                     onChange={(e) => setSearchDate(e.target.value)}
                     className="pl-10"

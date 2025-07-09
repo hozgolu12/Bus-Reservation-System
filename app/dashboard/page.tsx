@@ -29,7 +29,7 @@ export default function Dashboard() {
       route: 'New York → Boston',
       bus: 'Luxury Coach #101',
       seat: 'A12',
-      date: '2024-01-15',
+      date: '2025-07-12',
       time: '08:30 AM',
       status: 'confirmed',
       price: '$45'
@@ -39,7 +39,7 @@ export default function Dashboard() {
       route: 'Boston → Washington DC',
       bus: 'Express #205',
       seat: 'B08',
-      date: '2024-01-20',
+      date: '2025-07-15',
       time: '02:15 PM',
       status: 'confirmed',
       price: '$65'
@@ -52,7 +52,7 @@ export default function Dashboard() {
       route: 'New York → Philadelphia',
       bus: 'Comfort Plus #150',
       seat: 'C15',
-      date: '2024-01-25',
+      date: '2025-07-20',
       time: '10:00 AM',
       status: 'upcoming',
       price: '$35'
@@ -115,15 +115,17 @@ export default function Dashboard() {
           </Card>
 
           <Card className="border-0 shadow-lg hover:shadow-xl transition-shadow cursor-pointer">
-            <CardHeader className="text-center">
-              <div className="mx-auto w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mb-4">
-                <Calendar className="h-8 w-8 text-purple-600" />
-              </div>
-              <CardTitle>Travel History</CardTitle>
-              <CardDescription>
-                Review your past journeys
-              </CardDescription>
-            </CardHeader>
+            <Link href="/history">
+              <CardHeader className="text-center">
+                <div className="mx-auto w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mb-4">
+                  <Calendar className="h-8 w-8 text-purple-600" />
+                </div>
+                <CardTitle>Travel History</CardTitle>
+                <CardDescription>
+                  Review your past journeys
+                </CardDescription>
+              </CardHeader>
+            </Link>
           </Card>
         </div>
 

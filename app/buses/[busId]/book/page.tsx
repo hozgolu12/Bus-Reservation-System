@@ -140,7 +140,7 @@ export default function BookBus() {
       // Mock booking - replace with actual API call
       await new Promise(resolve => setTimeout(resolve, 2000));
       
-      toast.success('Booking confirmed! Redirecting to tickets...');
+      toast.success(`Booking confirmed! ${selectedSeats.length} seat${selectedSeats.length > 1 ? 's' : ''} reserved successfully.`);
       router.push('/tickets');
     } catch (error) {
       toast.error('Booking failed. Please try again.');

@@ -42,6 +42,18 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
       // Mock login - replace with actual API call
+      if (email === 'demo@busgo.com' && password === 'demo123') {
+        const mockUser = {
+          id: '1',
+          username: 'Demo User',
+          email: email,
+        };
+        
+        setUser(mockUser);
+        localStorage.setItem('user', JSON.stringify(mockUser));
+        return true;
+      }
+      
       const mockUser = {
         id: '1',
         username: email.split('@')[0],

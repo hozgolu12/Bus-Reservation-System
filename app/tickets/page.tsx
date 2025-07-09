@@ -24,53 +24,65 @@ export default function Tickets() {
 
   useEffect(() => {
     // Mock data - replace with actual API call
+    const today = new Date();
+    const tomorrow = new Date(today);
+    tomorrow.setDate(today.getDate() + 1);
+    const nextWeek = new Date(today);
+    nextWeek.setDate(today.getDate() + 7);
+    const lastWeek = new Date(today);
+    lastWeek.setDate(today.getDate() - 7);
+    
+    const formatDate = (date) => {
+      return date.toISOString().split('T')[0];
+    };
+    
     const mockTickets = [
       {
         id: '1',
-        ticketNumber: 'TKT-2024-001',
+        ticketNumber: 'TKT-2025-001',
         route: 'New York → Boston',
         bus: 'NYC-101 (Luxury Coach)',
         operator: 'Express Lines',
         passengerName: 'John Doe',
         seatNumbers: ['A12'],
-        date: '2024-01-15',
+        date: formatDate(tomorrow),
         departureTime: '08:30 AM',
         arrivalTime: '01:00 PM',
         price: 45,
         status: 'confirmed',
-        bookingDate: '2024-01-10',
+        bookingDate: formatDate(today),
         amenities: ['WiFi', 'AC', 'Charging Ports', 'Snacks']
       },
       {
         id: '2',
-        ticketNumber: 'TKT-2024-002',
+        ticketNumber: 'TKT-2025-002',
         route: 'Boston → Washington DC',
         bus: 'DC-201 (Standard Coach)',
         operator: 'Capital Express',
         passengerName: 'Jane Smith',
         seatNumbers: ['B08', 'B09'],
-        date: '2024-01-20',
+        date: formatDate(nextWeek),
         departureTime: '02:15 PM',
         arrivalTime: '06:30 PM',
         price: 130,
         status: 'confirmed',
-        bookingDate: '2024-01-12',
+        bookingDate: formatDate(today),
         amenities: ['WiFi', 'AC', 'Charging Ports']
       },
       {
         id: '3',
-        ticketNumber: 'TKT-2024-003',
+        ticketNumber: 'TKT-2025-003',
         route: 'New York → Philadelphia',
         bus: 'PHL-301 (Premium Express)',
         operator: 'Liberty Lines',
         passengerName: 'Mike Johnson',
         seatNumbers: ['C15'],
-        date: '2024-01-25',
+        date: formatDate(new Date(today.getTime() + 15 * 24 * 60 * 60 * 1000)), // 15 days from now
         departureTime: '10:00 AM',
         arrivalTime: '12:00 PM',
         price: 55,
-        status: 'upcoming',
-        bookingDate: '2024-01-14',
+        status: 'confirmed',
+        bookingDate: formatDate(today),
         amenities: ['WiFi', 'AC', 'Premium Seats', 'Entertainment']
       }
     ];
@@ -99,10 +111,12 @@ export default function Tickets() {
     switch (status) {
       case 'confirmed':
         return 'bg-green-100 text-green-800';
-      case 'upcoming':
+      case 'completed':
         return 'bg-blue-100 text-blue-800';
       case 'cancelled':
         return 'bg-red-100 text-red-800';
+      case 'expired':
+        return 'bg-gray-100 text-gray-800';
       default:
         return 'bg-gray-100 text-gray-800';
     }
@@ -256,7 +270,7 @@ export default function Tickets() {
                         <span>Show QR</span>
                       </Button>
                     </div>
-                    {ticket.status === 'upcoming' && (
+                    {ticket.status === 'confirmed' && new Date(ticket.date) > new Date() && (
                       <Button
                         variant="destructive"
                         size="sm"
