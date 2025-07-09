@@ -1,0 +1,95 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15
+    container_name: bus_reservation_db
+    environment:
+      POSTGRES_DB: bus_reservation
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - bus_network
+
+  # Django Authentication API
+  django-api:
+    build:
+      context: ./backend/django-auth-api
+      dockerfile: Dockerfile
+    container_name: django_auth_api
+    environment:
+      - DEBUG=True
+      - SECRET_KEY=your-secret-key-here
+      - DB_NAME=bus_reservation
+      - DB_USER=postgres
+      - DB_PASSWORD=password
+      - DB_HOST=postgres
+      - DB_PORT=5432
+    ports:
+      - "8000:8000"
+    depends_on:
+      - postgres
+    volumes:
+      - ./backend/django-auth-api:/app
+    networks:
+      - bus_network
+    command: >
+      sh -c "python manage.py migrate &&
+             python manage.py runserver 0.0.0.0:8000"
+
+  # NestJS Routes API
+  nestjs-api:
+    build:
+      context: ./backend/nestjs-routes-api
+      dockerfile: Dockerfile
+    container_name: nestjs_routes_api
+    environment:
+      - NODE_ENV=development
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=postgres
+      - DB_PASSWORD=password
+      - DB_NAME=bus_reservation
+    ports:
+      - "3001:3001"
+    depends_on:
+      - postgres
+    volumes:
+      - ./backend/nestjs-routes-api:/app
+      - /app/node_modules
+    networks:
+      - bus_network
+    command: npm run start:dev
+
+  # Next.js Frontend
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    container_name: bus_reservation_frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - django-api
+      - nestjs-api
+    volumes:
+      - .:/app
+      - /app/node_modules
+    networks:
+      - bus_network
+    environment:
+      - NEXT_PUBLIC_DJANGO_API_URL=http://localhost:8000
+      - NEXT_PUBLIC_NESTJS_API_URL=http://localhost:3001
+
+volumes:
+  postgres_data:
+
+networks:
+  bus_network:
+    driver: bridge
