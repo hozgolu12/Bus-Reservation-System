@@ -194,7 +194,3 @@ NEXT_PUBLIC_NESTJS_API_URL=https://your-nestjs-api.com
 3. Make your changes
 4. Test thoroughly
 5. Submit a pull request
-
-## License
-
-This project is licensed under the MIT License.
