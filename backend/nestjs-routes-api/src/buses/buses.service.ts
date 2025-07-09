@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { Bus } from './entities/bus.entity';
+import { Repository, EntityManager } from 'typeorm';
+import { Bus, Seat } from './entities/bus.entity';
 import { CreateBusDto } from './dto/create-bus.dto';
 import { UpdateBusDto } from './dto/update-bus.dto';
 import { ReserveSeatDto } from './dto/reserve-seat.dto';
@@ -11,6 +11,7 @@ export class BusesService {
   constructor(
     @InjectRepository(Bus)
     private busRepository: Repository<Bus>,
+    private entityManager: EntityManager,
   ) {}
 
   async create(createBusDto: CreateBusDto): Promise<Bus> {
@@ -52,34 +53,40 @@ export class BusesService {
   }
 
   async reserveSeats(id: number, reserveSeatDto: ReserveSeatDto): Promise<Bus> {
-    const bus = await this.findOne(id);
-    const { seat_numbers, user_id } = reserveSeatDto;
+    return this.entityManager.transaction(async transactionalEntityManager => {
+      const bus = await transactionalEntityManager.findOne(Bus, { where: { id }, lock: { mode: 'pessimistic_write' } });
 
-    // Check if seats are available
-    const seatMap = [...bus.seat_map];
-    for (const seatNumber of seat_numbers) {
-      const seat = seatMap.find(s => s.number === seatNumber);
-      if (!seat) {
-        throw new BadRequestException(`Seat ${seatNumber} does not exist`);
+      if (!bus) {
+        throw new NotFoundException(`Bus with ID ${id} not found`);
       }
-      if (seat.isOccupied) {
-        throw new BadRequestException(`Seat ${seatNumber} is already occupied`);
+
+      const { seat_numbers, user_id } = reserveSeatDto;
+
+      const seatMap = [...bus.seat_map];
+      for (const seatNumber of seat_numbers) {
+        const seat = seatMap.find(s => s.number === seatNumber);
+        if (!seat) {
+          throw new BadRequestException(`Seat ${seatNumber} does not exist`);
+        }
+        if (seat.isOccupied) {
+          throw new BadRequestException(`Seat ${seatNumber} is already occupied`);
+        }
       }
-    }
 
-    // Reserve the seats
-    for (const seatNumber of seat_numbers) {
-      const seatIndex = seatMap.findIndex(s => s.number === seatNumber);
-      seatMap[seatIndex] = {
-        ...seatMap[seatIndex],
-        isOccupied: true,
-        reservedBy: user_id,
-        reservedAt: new Date(),
-      };
-    }
+      // Reserve the seats
+      for (const seatNumber of seat_numbers) {
+        const seatIndex = seatMap.findIndex(s => s.number === seatNumber);
+        seatMap[seatIndex] = {
+          ...seatMap[seatIndex],
+          isOccupied: true,
+          reservedBy: user_id.toString(),
+          reservedAt: new Date(),
+        };
+      }
 
-    bus.seat_map = seatMap;
-    return await this.busRepository.save(bus);
+      bus.seat_map = seatMap;
+      return await transactionalEntityManager.save(bus);
+    });
   }
 
   async cancelSeats(id: number, reserveSeatDto: ReserveSeatDto): Promise<Bus> {
@@ -110,28 +117,19 @@ export class BusesService {
     await this.busRepository.save(bus);
   }
 
-  private generateSeatMap(totalSeats: number): any[] {
-    const seats = [];
-    const occupiedSeats = Math.floor(totalSeats * 0.3); // 30% occupied
-    const occupiedSeatNumbers = new Set();
-    
-    // Randomly select occupied seats
-    while (occupiedSeatNumbers.size < occupiedSeats) {
-      occupiedSeatNumbers.add(Math.floor(Math.random() * totalSeats) + 1);
-    }
-
+  private generateSeatMap(totalSeats: number): Seat[] {
+    const seats: Seat[] = [];
     for (let i = 1; i <= totalSeats; i++) {
       seats.push({
         number: i,
         row: Math.ceil(i / 4),
         position: ((i - 1) % 4) + 1,
-        isOccupied: occupiedSeatNumbers.has(i),
+        isOccupied: false,
         type: i <= 4 ? 'premium' : 'standard',
-        reservedBy: occupiedSeatNumbers.has(i) ? 'system' : null,
-        reservedAt: occupiedSeatNumbers.has(i) ? new Date() : null,
+        reservedBy: null,
+        reservedAt: null,
       });
     }
-
     return seats;
   }
 }

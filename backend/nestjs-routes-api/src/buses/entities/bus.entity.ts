@@ -1,6 +1,16 @@
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, CreateDateColumn, UpdateDateColumn, JoinColumn } from 'typeorm';
 import { Route } from '../../routes/entities/route.entity';
 
+export class Seat {
+  number: number;
+  row: number;
+  position: number;
+  isOccupied: boolean;
+  type: 'premium' | 'standard';
+  reservedBy: string | null;
+  reservedAt: Date | null;
+}
+
 @Entity('buses')
 export class Bus {
   @PrimaryGeneratedColumn()
@@ -19,7 +29,7 @@ export class Bus {
   total_seats: number;
 
   @Column({ type: 'json' })
-  seat_map: any[];
+  seat_map: Seat[];
 
   @Column({ type: 'time' })
   departure_time: string;

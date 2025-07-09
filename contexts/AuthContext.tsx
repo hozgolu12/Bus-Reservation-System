@@ -10,6 +10,7 @@ interface User {
 
 interface AuthContextType {
   user: User | null;
+  token: string | null;
   login: (email: string, password: string) => Promise<boolean>;
   register: (username: string, email: string, password: string) => Promise<boolean>;
   logout: () => void;
@@ -28,72 +29,150 @@ export const useAuth = () => {
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    // Check if user is logged in on mount
-    const storedUser = localStorage.getItem('user');
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
+  const DJANGO_API_URL = process.env.NEXT_PUBLIC_DJANGO_API_URL || 'http://localhost:8000';
+
+  const fetchUserProfile = async (authToken: string): Promise<User | null> => {
+    try {
+      const response = await fetch(`${DJANGO_API_URL}/api/auth/profile/`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${authToken}`,
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        return {
+          id: data.id,
+          username: data.username,
+          email: data.email,
+        };
+      } else {
+        console.error('Failed to fetch user profile:', response.statusText);
+        return null;
+      }
+    } catch (error) {
+      console.error('Error fetching user profile:', error);
+      return null;
     }
-    setIsLoading(false);
+  };
+
+  useEffect(() => {
+    const loadAuthData = async () => {
+      const storedToken = localStorage.getItem('token');
+      if (storedToken) {
+        setToken(storedToken);
+        const fetchedUser = await fetchUserProfile(storedToken);
+        if (fetchedUser) {
+          setUser(fetchedUser);
+        } else {
+          // Token might be expired or invalid, clear it
+          localStorage.removeItem('token');
+          setToken(null);
+        }
+      }
+      setIsLoading(false);
+    };
+
+    loadAuthData();
   }, []);
 
   const login = async (email: string, password: string): Promise<boolean> => {
+    setIsLoading(true);
     try {
-      // Mock login - replace with actual API call
-      if (email === 'demo@busgo.com' && password === 'demo123') {
-        const mockUser = {
-          id: '1',
-          username: 'Demo User',
-          email: email,
-        };
+      const response = await fetch(`${DJANGO_API_URL}/api/auth/login/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const newToken = data.token; // Assuming the backend returns a 'token' field
+        localStorage.setItem('token', newToken);
+        setToken(newToken);
         
-        setUser(mockUser);
-        localStorage.setItem('user', JSON.stringify(mockUser));
-        return true;
+        const fetchedUser = await fetchUserProfile(newToken);
+        if (fetchedUser) {
+          setUser(fetchedUser);
+          setIsLoading(false);
+          return true;
+        } else {
+          // Failed to fetch user profile after successful login
+          localStorage.removeItem('token');
+          setToken(null);
+          setUser(null);
+          setIsLoading(false);
+          return false;
+        }
+      } else {
+        console.error('Login failed:', response.statusText);
+        setIsLoading(false);
+        return false;
       }
-      
-      const mockUser = {
-        id: '1',
-        username: email.split('@')[0],
-        email: email,
-      };
-      
-      setUser(mockUser);
-      localStorage.setItem('user', JSON.stringify(mockUser));
-      return true;
     } catch (error) {
-      console.error('Login error:', error);
+      console.error('Error during login:', error);
+      setIsLoading(false);
       return false;
     }
   };
 
   const register = async (username: string, email: string, password: string): Promise<boolean> => {
+    setIsLoading(true);
     try {
-      // Mock registration - replace with actual API call
-      const mockUser = {
-        id: '1',
-        username: username,
-        email: email,
-      };
-      
-      setUser(mockUser);
-      localStorage.setItem('user', JSON.stringify(mockUser));
-      return true;
+      const response = await fetch(`${DJANGO_API_URL}/api/auth/register/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ username, email, password }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const newToken = data.token; // Assuming the backend returns a 'token' field
+        localStorage.setItem('token', newToken);
+        setToken(newToken);
+
+        const fetchedUser = await fetchUserProfile(newToken);
+        if (fetchedUser) {
+          setUser(fetchedUser);
+          setIsLoading(false);
+          return true;
+        } else {
+          // Failed to fetch user profile after successful registration
+          localStorage.removeItem('token');
+          setToken(null);
+          setUser(null);
+          setIsLoading(false);
+          return false;
+        }
+      } else {
+        console.error('Registration failed:', response.statusText);
+        setIsLoading(false);
+        return false;
+      }
     } catch (error) {
-      console.error('Registration error:', error);
+      console.error('Error during registration:', error);
+      setIsLoading(false);
       return false;
     }
   };
 
   const logout = () => {
+    localStorage.removeItem('token');
+    setToken(null);
     setUser(null);
-    localStorage.removeItem('user');
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, register, logout, isLoading }}>
+    <AuthContext.Provider value={{ user, token, login, register, logout, isLoading }}>
       {children}
     </AuthContext.Provider>
   );

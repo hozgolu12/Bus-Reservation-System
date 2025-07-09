@@ -12,6 +12,7 @@ import { Separator } from '@/components/ui/separator';
 import { Bus, MapPin, Clock, Users, Star, ArrowLeft, User, Phone, Mail, CreditCard } from 'lucide-react';
 import { toast } from 'sonner';
 import Link from 'next/link';
+import { BusAPI } from '@/lib/api';
 
 export default function BookBus() {
   const { user } = useAuth();
@@ -31,72 +32,22 @@ export default function BookBus() {
   }, [user, router]);
 
   useEffect(() => {
-    // Mock data - replace with actual API call
-    const busesData = {
-      '101': {
-        id: '101',
-        busNumber: 'NYC-101',
-        type: 'Luxury Coach',
-        route: 'New York → Boston',
-        departureTime: '08:30 AM',
-        arrivalTime: '01:00 PM',
-        duration: '4h 30m',
-        availableSeats: 25,
-        totalSeats: 40,
-        price: 45,
-        rating: 4.5,
-        amenities: ['WiFi', 'AC', 'Charging Ports', 'Snacks', 'Reclining Seats'],
-        operator: 'Express Lines',
-        seatMap: generateSeatMap(40)
-      },
-      '102': {
-        id: '102',
-        busNumber: 'NYC-102',
-        type: 'Standard Coach',
-        route: 'New York → Boston',
-        departureTime: '10:15 AM',
-        arrivalTime: '02:45 PM',
-        duration: '4h 30m',
-        availableSeats: 18,
-        totalSeats: 35,
-        price: 40,
-        rating: 4.2,
-        amenities: ['WiFi', 'AC', 'Charging Ports'],
-        operator: 'City Transport',
-        seatMap: generateSeatMap(35)
+    const fetchBusData = async () => {
+      try {
+        const busData = await BusAPI.getBus(Number(params.busId));
+        setBus(busData);
+      } catch (error) {
+        toast.error('Failed to fetch bus details.');
       }
     };
 
-    setBus(busesData[params.busId as string]);
+    if (params.busId) {
+      fetchBusData();
+    }
   }, [params.busId]);
 
-  // Generate seat map
-  function generateSeatMap(totalSeats: number) {
-    const seats = [];
-    const occupiedSeats = Math.floor(totalSeats * 0.4); // 40% occupied
-    const occupiedSeatNumbers = new Set();
-    
-    // Randomly select occupied seats
-    while (occupiedSeatNumbers.size < occupiedSeats) {
-      occupiedSeatNumbers.add(Math.floor(Math.random() * totalSeats) + 1);
-    }
-
-    for (let i = 1; i <= totalSeats; i++) {
-      seats.push({
-        number: i,
-        row: Math.ceil(i / 4),
-        position: ((i - 1) % 4) + 1,
-        isOccupied: occupiedSeatNumbers.has(i),
-        isSelected: false,
-        type: i <= 4 ? 'premium' : 'standard'
-      });
-    }
-
-    return seats;
-  }
-
   const handleSeatClick = (seatNumber: number) => {
-    if (bus.seatMap.find(s => s.number === seatNumber)?.isOccupied) {
+    if (bus.seat_map.find(s => s.number === seatNumber)?.isOccupied) {
       return;
     }
 
@@ -137,8 +88,7 @@ export default function BookBus() {
     setIsLoading(true);
 
     try {
-      // Mock booking - replace with actual API call
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      await BusAPI.reserveSeats(bus.id, { seat_numbers: selectedSeats, user_id: user.id });
       
       toast.success(`Booking confirmed! ${selectedSeats.length} seat${selectedSeats.length > 1 ? 's' : ''} reserved successfully.`);
       router.push('/tickets');
@@ -158,7 +108,7 @@ export default function BookBus() {
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center">
         <div className="text-center">
           <Bus className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-          <p className="text-gray-600">Bus not found</p>
+          <p className="text-gray-600">Loading bus details...</p>
         </div>
       </div>
     );
@@ -234,12 +184,12 @@ export default function BookBus() {
                   </div>
                   
                   <div className="grid gap-2">
-                    {Array.from({ length: Math.ceil(bus.totalSeats / 4) }).map((_, rowIndex) => (
+                    {Array.from({ length: Math.ceil(bus.total_seats / 4) }).map((_, rowIndex) => (
                       <div key={rowIndex} className="flex items-center justify-center space-x-2">
                         <div className="flex space-x-1">
                           {[1, 2].map(seatPos => {
                             const seatNumber = rowIndex * 4 + seatPos;
-                            const seat = bus.seatMap.find(s => s.number === seatNumber);
+                            const seat = bus.seat_map.find(s => s.number === seatNumber);
                             return seat ? (
                               <div
                                 key={seatNumber}
@@ -255,7 +205,7 @@ export default function BookBus() {
                         <div className="flex space-x-1">
                           {[3, 4].map(seatPos => {
                             const seatNumber = rowIndex * 4 + seatPos;
-                            const seat = bus.seatMap.find(s => s.number === seatNumber);
+                            const seat = bus.seat_map.find(s => s.number === seatNumber);
                             return seat ? (
                               <div
                                 key={seatNumber}
@@ -293,17 +243,17 @@ export default function BookBus() {
             {/* Bus Details */}
             <Card className="border-0 shadow-lg">
               <CardHeader>
-                <CardTitle className="text-lg">{bus.busNumber}</CardTitle>
+                <CardTitle className="text-lg">{bus.bus_number}</CardTitle>
                 <CardDescription>{bus.type}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex items-center space-x-2">
                   <MapPin className="h-4 w-4 text-gray-500" />
-                  <span className="text-sm">{bus.route}</span>
+                  <span className="text-sm">{bus.route.name}</span>
                 </div>
                 <div className="flex items-center space-x-2">
                   <Clock className="h-4 w-4 text-gray-500" />
-                  <span className="text-sm">{bus.departureTime} - {bus.arrivalTime}</span>
+                  <span className="text-sm">{bus.departure_time} - {bus.arrival_time}</span>
                 </div>
                 <div className="flex items-center space-x-2">
                   <Star className="h-4 w-4 text-yellow-500 fill-current" />
