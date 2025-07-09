@@ -68,7 +68,7 @@ cd backend/django-auth-api
 python -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
 pip install -r requirements.txt
-cp .env.example .env
+cd .env.example .env
 python manage.py migrate
 python manage.py runserver 8000
 ```
@@ -77,7 +77,7 @@ python manage.py runserver 8000
 ```bash
 cd backend/nestjs-routes-api
 npm install
-cp .env.example .env
+cd .env.example .env
 npm run start:dev
 ```
 
