@@ -217,6 +217,7 @@ export default function Dashboard() {
                         {ticket.status}
                       </Badge>
                     </div>
+                  </div>
             {user.role === 'superadmin' && (
               <Link href="/superadmin">
                 <Button variant="outline" size="sm">
@@ -239,7 +240,6 @@ export default function Dashboard() {
                 Account
               </Button>
             </Link>
-                  </div>
                 </CardContent>
               </Card>
             ))}
