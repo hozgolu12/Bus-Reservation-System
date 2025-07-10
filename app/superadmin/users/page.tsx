@@ -277,7 +277,7 @@ export default function ManageUsers() {
                         <DropdownMenuContent>
                           <DropdownMenuItem>View Details</DropdownMenuItem>
                           <DropdownMenuItem>View Bookings</DropdownMenuItem>
-                          <DropdownMenuItem className="text-red-600">
+                          <DropdownMenuItem className="text-red-600 focus:text-red-600">
                             Delete Account
                           </DropdownMenuItem>
                         </DropdownMenuContent>

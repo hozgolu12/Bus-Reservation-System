@@ -331,7 +331,7 @@ export default function ManageBuses() {
                 <div className="space-y-2">
                   <Label>Amenities</Label>
                   <div className="grid grid-cols-2 gap-2">
-                    {['WiFi', 'AC', 'Charging Ports', 'Snacks', 'Entertainment', 'Premium Seats', 'Reclining Seats'].map((amenity) => (
+                    {['WiFi', 'AC', 'Charging Ports', 'Snacks', 'Entertainment', 'Premium Seats', 'Reclining Seats'].map((amenity: string) => (
                       <label key={amenity} className="flex items-center space-x-2 cursor-pointer">
                         <input
                           type="checkbox"
