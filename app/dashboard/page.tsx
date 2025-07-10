@@ -6,7 +6,7 @@ import { useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Bus, MapPin, Clock, Ticket, User, LogOut, Plus, Calendar } from 'lucide-react';
+import { Bus, MapPin, Clock, Ticket, User, LogOut, Plus, Calendar, Shield, Building2 } from 'lucide-react';
 import Link from 'next/link';
 
 export default function Dashboard() {
@@ -217,6 +217,28 @@ export default function Dashboard() {
                         {ticket.status}
                       </Badge>
                     </div>
+            {user.role === 'superadmin' && (
+              <Link href="/superadmin">
+                <Button variant="outline" size="sm">
+                  <Shield className="h-4 w-4 mr-2" />
+                  Super Admin
+                </Button>
+              </Link>
+            )}
+            {(user.role === 'operator' || user.role === 'superadmin') && (
+              <Link href="/operator">
+                <Button variant="outline" size="sm">
+                  <Building2 className="h-4 w-4 mr-2" />
+                  Operator Panel
+                </Button>
+              </Link>
+            )}
+            <Link href="/account">
+              <Button variant="outline" size="sm">
+                <User className="h-4 w-4 mr-2" />
+                Account
+              </Button>
+            </Link>
                   </div>
                 </CardContent>
               </Card>
