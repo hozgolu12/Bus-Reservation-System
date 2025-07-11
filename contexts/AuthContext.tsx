@@ -39,32 +39,17 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  const DJANGO_API_URL = process.env.NEXT_PUBLIC_DJANGO_API_URL || 'http://localhost:8000';
-
   const fetchUserProfile = async (authToken: string): Promise<User | null> => {
     try {
-      const response = await fetch(`${DJANGO_API_URL}/api/auth/profile/`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${authToken}`,
-        },
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        return {
-          id: data.id,
-          username: data.username,
-          email: data.email,
-          role: data.role || 'user',
-          operatorId: data.operator_id,
-          isActive: data.is_active !== false,
-        };
-      } else {
-        console.error('Failed to fetch user profile:', response.statusText);
-        return null;
-      }
+      const data = await AuthAPI.getProfile(authToken);
+      return {
+        id: data.id,
+        username: data.username,
+        email: data.email,
+        role: data.role || 'user',
+        operatorId: data.operator_id,
+        isActive: data.is_active !== false,
+      };
     } catch (error) {
       console.error('Error fetching user profile:', error);
       return null;
@@ -85,7 +70,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         }
         
         if (fetchedUser) {
-          setUser(fetchedUser);
+          setUser({ ...fetchedUser, token: storedToken });
         } else {
           // Token might be expired or invalid, clear it
           localStorage.removeItem('token');
@@ -101,40 +86,25 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const login = async (email: string, password: string): Promise<boolean> => {
     setIsLoading(true);
     try {
-      const response = await fetch(`${DJANGO_API_URL}/api/auth/login/`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password }),
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        const newToken = data.access || data.token;
-        localStorage.setItem('token', newToken);
-        setToken(newToken);
-        
-        // Get user from response or token
-        let fetchedUser = data.user;
-        if (!fetchedUser) {
-          fetchedUser = await fetchUserProfile(newToken);
-        }
-        
-        if (fetchedUser) {
-          setUser(fetchedUser);
-          setIsLoading(false);
-          return true;
-        } else {
-          // Failed to fetch user profile after successful login
-          localStorage.removeItem('token');
-          setToken(null);
-          setUser(null);
-          setIsLoading(false);
-          return false;
-        }
+      const data = await AuthAPI.login({ email, password });
+      const newToken = data.access || data.token;
+      localStorage.setItem('token', newToken);
+      setToken(newToken);
+      
+      // Get user from response or fetch from API
+      let fetchedUser = data.user;
+      if (!fetchedUser) {
+        fetchedUser = await fetchUserProfile(newToken);
+      }
+      
+      if (fetchedUser) {
+        setUser({ ...fetchedUser, token: newToken });
+        setIsLoading(false);
+        return true;
       } else {
-        console.error('Login failed:', response.statusText);
+        localStorage.removeItem('token');
+        setToken(null);
+        setUser(null);
         setIsLoading(false);
         return false;
       }
@@ -148,39 +118,24 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const register = async (username: string, email: string, password: string, role: string = 'user'): Promise<boolean> => {
     setIsLoading(true);
     try {
-      const response = await fetch(`${DJANGO_API_URL}/api/auth/register/`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ username, email, password, role }),
-      });
+      const data = await AuthAPI.register({ username, email, password, role });
+      const newToken = data.access || data.token;
+      localStorage.setItem('token', newToken);
+      setToken(newToken);
 
-      if (response.ok) {
-        const data = await response.json();
-        const newToken = data.access || data.token;
-        localStorage.setItem('token', newToken);
-        setToken(newToken);
-
-        let fetchedUser = data.user;
-        if (!fetchedUser) {
-          fetchedUser = await fetchUserProfile(newToken);
-        }
-        
-        if (fetchedUser) {
-          setUser(fetchedUser);
-          setIsLoading(false);
-          return true;
-        } else {
-          // Failed to fetch user profile after successful registration
-          localStorage.removeItem('token');
-          setToken(null);
-          setUser(null);
-          setIsLoading(false);
-          return false;
-        }
+      let fetchedUser = data.user;
+      if (!fetchedUser) {
+        fetchedUser = await fetchUserProfile(newToken);
+      }
+      
+      if (fetchedUser) {
+        setUser({ ...fetchedUser, token: newToken });
+        setIsLoading(false);
+        return true;
       } else {
-        console.error('Registration failed:', response.statusText);
+        localStorage.removeItem('token');
+        setToken(null);
+        setUser(null);
         setIsLoading(false);
         return false;
       }
