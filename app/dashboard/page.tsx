@@ -23,41 +23,8 @@ export default function Dashboard() {
     return null;
   }
 
-  const recentTickets = [
-    {
-      id: '1',
-      route: 'New York → Boston',
-      bus: 'Luxury Coach #101',
-      seat: 'A12',
-      date: '2025-07-12',
-      time: '08:30 AM',
-      status: 'confirmed',
-      price: '$45'
-    },
-    {
-      id: '2',
-      route: 'Boston → Washington DC',
-      bus: 'Express #205',
-      seat: 'B08',
-      date: '2025-07-15',
-      time: '02:15 PM',
-      status: 'confirmed',
-      price: '$65'
-    }
-  ];
-
-  const upcomingJourneys = [
-    {
-      id: '3',
-      route: 'New York → Philadelphia',
-      bus: 'Comfort Plus #150',
-      seat: 'C15',
-      date: '2025-07-20',
-      time: '10:00 AM',
-      status: 'upcoming',
-      price: '$35'
-    }
-  ];
+  const upcomingJourneys = []; // Replace with actual data fetching logic
+  const recentTickets = []; // Replace with actual data fetching logic
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
