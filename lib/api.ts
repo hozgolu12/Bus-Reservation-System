@@ -1,4 +1,5 @@
-const API_GATEWAY_URL = process.env.NEXT_PUBLIC_API_GATEWAY_URL || 'http://localhost:3002';
+const DJANGO_API_URL = process.env.NEXT_PUBLIC_DJANGO_API_URL || 'http://localhost:8000';
+const NESTJS_API_URL = process.env.NEXT_PUBLIC_NESTJS_API_URL || 'http://localhost:3001';
 
 // API client for Django authentication service
 export class AuthAPI {
@@ -18,48 +19,50 @@ export class AuthAPI {
     username: string;
     email: string;
     password: string;
-    password_confirm: string;
+    role?: string;
     phone_number?: string;
   }) {
-    const response = await fetch(`${API_GATEWAY_URL}/api/auth/register/`, {
+    const response = await fetch(`${DJANGO_API_URL}/api/auth/register/`, {
       method: 'POST',
       headers: this.getHeaders(),
       body: JSON.stringify(userData),
     });
     
     if (!response.ok) {
-      throw new Error('Registration failed');
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Registration failed');
     }
     
     return response.json();
   }
 
   static async login(credentials: { email: string; password: string }) {
-    const response = await fetch(`${API_GATEWAY_URL}/api/auth/login/`, {
+    const response = await fetch(`${DJANGO_API_URL}/api/auth/login/`, {
       method: 'POST',
       headers: this.getHeaders(),
       body: JSON.stringify(credentials),
     });
     
     if (!response.ok) {
-      throw new Error('Login failed');
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Login failed');
     }
     
     return response.json();
   }
 
   static async logout(refreshToken: string) {
-    const response = await fetch(`${API_GATEWAY_URL}/api/auth/logout/`, {
+    const response = await fetch(`${DJANGO_API_URL}/api/auth/logout/`, {
       method: 'POST',
       headers: this.getHeaders(),
-      body: JSON.stringify({ refresh: refreshToken }),
+      body: JSON.stringify({ refresh_token: refreshToken }),
     });
     
     return response.ok;
   }
 
   static async getProfile(token: string) {
-    const response = await fetch(`${API_GATEWAY_URL}/api/auth/profile/`, {
+    const response = await fetch(`${DJANGO_API_URL}/api/auth/profile/`, {
       headers: this.getHeaders(token),
     });
     
@@ -81,7 +84,7 @@ export class TicketAPI {
   }
 
   static async getUserTickets(token: string, status?: string) {
-    const url = new URL(`${API_GATEWAY_URL}/api/tickets/`);
+    const url = new URL(`${DJANGO_API_URL}/api/tickets/`);
     if (status) {
       url.searchParams.append('status', status);
     }
@@ -112,21 +115,22 @@ export class TicketAPI {
     price_per_seat: number;
     total_price: number;
   }) {
-    const response = await fetch(`${API_GATEWAY_URL}/api/tickets/book/`, {
+    const response = await fetch(`${DJANGO_API_URL}/api/tickets/book/`, {
       method: 'POST',
       headers: this.getHeaders(token),
       body: JSON.stringify(ticketData),
     });
     
     if (!response.ok) {
-      throw new Error('Failed to book ticket');
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to book ticket');
     }
     
     return response.json();
   }
 
   static async cancelTicket(token: string, ticketId: number) {
-    const response = await fetch(`${API_GATEWAY_URL}/api/tickets/${ticketId}/cancel/`, {
+    const response = await fetch(`${DJANGO_API_URL}/api/tickets/${ticketId}/cancel/`, {
       method: 'DELETE',
       headers: this.getHeaders(token),
     });
@@ -139,7 +143,7 @@ export class TicketAPI {
   }
 
   static async getTicketDetail(token: string, ticketId: number) {
-    const response = await fetch(`${API_GATEWAY_URL}/api/tickets/${ticketId}/`, {
+    const response = await fetch(`${DJANGO_API_URL}/api/tickets/${ticketId}/`, {
       headers: this.getHeaders(token),
     });
     
@@ -159,7 +163,7 @@ export class RoutesAPI {
     page?: number;
     limit?: number;
   }) {
-    const url = new URL(`${API_GATEWAY_URL}/api/routes`);
+    const url = new URL(`${NESTJS_API_URL}/api/routes`);
     
     if (filters) {
       Object.entries(filters).forEach(([key, value]) => {
@@ -179,7 +183,7 @@ export class RoutesAPI {
   }
 
   static async getRoute(routeId: number) {
-    const response = await fetch(`${API_GATEWAY_URL}/api/routes/${routeId}`);
+    const response = await fetch(`${NESTJS_API_URL}/api/routes/${routeId}`);
     
     if (!response.ok) {
       throw new Error('Failed to fetch route');
@@ -189,7 +193,7 @@ export class RoutesAPI {
   }
 
   static async getBusesByRoute(routeId: number) {
-    const response = await fetch(`${API_GATEWAY_URL}/api/routes/${routeId}/buses`);
+    const response = await fetch(`${NESTJS_API_URL}/api/routes/${routeId}/buses`);
     
     if (!response.ok) {
       throw new Error('Failed to fetch buses');
@@ -201,7 +205,7 @@ export class RoutesAPI {
 
 export class BusAPI {
   static async getBus(busId: number) {
-    const response = await fetch(`${API_GATEWAY_URL}/api/buses/${busId}`);
+    const response = await fetch(`${NESTJS_API_URL}/api/buses/${busId}`);
     
     if (!response.ok) {
       throw new Error('Failed to fetch bus');
@@ -214,7 +218,7 @@ export class BusAPI {
     seat_numbers: number[];
     user_id: number;
   }) {
-    const response = await fetch(`${API_GATEWAY_URL}/api/buses/${busId}/reserve`, {
+    const response = await fetch(`${NESTJS_API_URL}/api/buses/${busId}/reserve`, {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
@@ -223,7 +227,8 @@ export class BusAPI {
     });
     
     if (!response.ok) {
-      throw new Error('Failed to reserve seats');
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to reserve seats');
     }
     
     return response.json();
@@ -233,7 +238,7 @@ export class BusAPI {
     seat_numbers: number[];
     user_id: number;
   }) {
-    const response = await fetch(`${API_GATEWAY_URL}/api/buses/${busId}/cancel`, {
+    const response = await fetch(`${NESTJS_API_URL}/api/buses/${busId}/cancel`, {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
@@ -242,7 +247,8 @@ export class BusAPI {
     });
     
     if (!response.ok) {
-      throw new Error('Failed to cancel seats');
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to cancel seats');
     }
     
     return response.json();

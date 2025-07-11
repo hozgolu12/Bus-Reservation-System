@@ -15,6 +15,7 @@ export default function Tickets() {
   const { user } = useAuth();
   const router = useRouter();
   const [tickets, setTickets] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     if (!user) {
@@ -24,30 +25,37 @@ export default function Tickets() {
 
   useEffect(() => {
     const fetchTickets = async () => {
-      if (!token) return;
+      if (!user) return;
+      
       try {
-        const fetchedTickets = await TicketAPI.getUserTickets(token);
-        setTickets(fetchedTickets);
+        setIsLoading(true);
+        const response = await TicketAPI.getUserTickets(user.token);
+        setTickets(response.results || response);
       } catch (error) {
+        console.error('Failed to fetch tickets:', error);
         toast.error('Failed to fetch tickets');
+      } finally {
+        setIsLoading(false);
       }
     };
+    
     fetchTickets();
-  }, []);
+  }, [user]);
 
   const handleCancelTicket = async (ticketId: string) => {
+    if (!user) return;
+    
     try {
-      
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      setTickets(prev => prev.filter(ticket => ticket.id !== ticketId));
+      await TicketAPI.cancelTicket(user.token, Number(ticketId));
+      setTickets(prev => prev.filter((ticket: any) => ticket.id !== ticketId));
       toast.success('Ticket cancelled successfully');
     } catch (error) {
+      console.error('Failed to cancel ticket:', error);
       toast.error('Failed to cancel ticket');
     }
   };
 
-  const handleDownloadTicket = (ticket) => {
+  const handleDownloadTicket = (ticket: any) => {
     // TODO: Implement actual ticket generation and download logic
     toast.success('Ticket downloaded successfully');
   };
@@ -107,16 +115,23 @@ export default function Tickets() {
         </div>
 
         {/* Tickets List */}
-        {tickets.length > 0 ? (
+        {isLoading ? (
+          <Card className="border-0 shadow-lg">
+            <CardContent className="p-12 text-center">
+              <Bus className="h-12 w-12 text-gray-400 mx-auto mb-4 animate-pulse" />
+              <p className="text-gray-600">Loading tickets...</p>
+            </CardContent>
+          </Card>
+        ) : tickets.length > 0 ? (
           <div className="space-y-6">
-            {tickets.map((ticket) => (
+            {tickets.map((ticket: any) => (
               <Card key={ticket.id} className="border-0 shadow-lg">
                 <CardHeader className="pb-4">
                   <div className="flex items-center justify-between">
                     <div>
-                      <CardTitle className="text-xl">{ticket.route}</CardTitle>
+                      <CardTitle className="text-xl">{ticket.route_name}</CardTitle>
                       <CardDescription className="text-base mt-1">
-                        {ticket.bus} • {ticket.operator}
+                        {ticket.bus_number} • Operator
                       </CardDescription>
                     </div>
                     <div className="text-right">
@@ -124,7 +139,7 @@ export default function Tickets() {
                         {ticket.status.charAt(0).toUpperCase() + ticket.status.slice(1)}
                       </Badge>
                       <div className="text-sm text-gray-500 mt-1">
-                        {ticket.ticketNumber}
+                        {ticket.ticket_number}
                       </div>
                     </div>
                   </div>
@@ -137,21 +152,21 @@ export default function Tickets() {
                         <Calendar className="h-5 w-5 text-gray-500" />
                         <div>
                           <p className="font-medium">Travel Date</p>
-                          <p className="text-sm text-gray-600">{ticket.date}</p>
+                          <p className="text-sm text-gray-600">{ticket.departure_date}</p>
                         </div>
                       </div>
                       <div className="flex items-center space-x-3">
                         <Clock className="h-5 w-5 text-gray-500" />
                         <div>
                           <p className="font-medium">Time</p>
-                          <p className="text-sm text-gray-600">{ticket.departureTime} - {ticket.arrivalTime}</p>
+                          <p className="text-sm text-gray-600">{ticket.departure_time} - {ticket.arrival_time}</p>
                         </div>
                       </div>
                       <div className="flex items-center space-x-3">
                         <Users className="h-5 w-5 text-gray-500" />
                         <div>
                           <p className="font-medium">Passenger</p>
-                          <p className="text-sm text-gray-600">{ticket.passengerName}</p>
+                          <p className="text-sm text-gray-600">{ticket.passenger_name}</p>
                         </div>
                       </div>
                       <div className="flex items-center space-x-3">
@@ -159,7 +174,7 @@ export default function Tickets() {
                         <div>
                           <p className="font-medium">Seats</p>
                           <div className="flex flex-wrap gap-1 mt-1">
-                            {ticket.seatNumbers.map((seat, index) => (
+                            {ticket.seat_numbers.map((seat: number, index: number) => (
                               <Badge key={index} variant="outline">
                                 {seat}
                               </Badge>
@@ -174,7 +189,7 @@ export default function Tickets() {
                       <div>
                         <p className="font-medium mb-2">Amenities</p>
                         <div className="flex flex-wrap gap-1">
-                          {ticket.amenities.map((amenity, index) => (
+                          {(ticket.amenities || []).map((amenity: string, index: number) => (
                             <Badge key={index} variant="secondary" className="text-xs">
                               {amenity}
                             </Badge>
@@ -183,11 +198,11 @@ export default function Tickets() {
                       </div>
                       <div>
                         <p className="font-medium">Booking Date</p>
-                        <p className="text-sm text-gray-600">{ticket.bookingDate}</p>
+                        <p className="text-sm text-gray-600">{new Date(ticket.booking_date).toLocaleDateString()}</p>
                       </div>
                       <div>
                         <p className="font-medium">Total Price</p>
-                        <p className="text-2xl font-bold text-gray-900">${ticket.price}</p>
+                        <p className="text-2xl font-bold text-gray-900">${ticket.total_price}</p>
                       </div>
                     </div>
                   </div>
@@ -215,7 +230,7 @@ export default function Tickets() {
                         <span>Show QR</span>
                       </Button>
                     </div>
-                    {ticket.status === 'confirmed' && new Date(ticket.date) > new Date() && (
+                    {ticket.status === 'confirmed' && new Date(ticket.departure_date) > new Date() && (
                       <Button
                         variant="destructive"
                         size="sm"

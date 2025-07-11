@@ -18,7 +18,9 @@ export default function Routes() {
   const [searchFrom, setSearchFrom] = useState('');
   const [searchTo, setSearchTo] = useState('');
   const [searchDate, setSearchDate] = useState('');
+  const [routes, setRoutes] = useState([]);
   const [filteredRoutes, setFilteredRoutes] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     if (!user) {
@@ -26,7 +28,22 @@ export default function Routes() {
     }
   }, [user, router]);
 
-  const [routes, setRoutes] = useState([]);
+  useEffect(() => {
+    const fetchRoutes = async () => {
+      try {
+        setIsLoading(true);
+        const response = await RoutesAPI.getRoutes();
+        setRoutes(response.data || response);
+      } catch (error) {
+        console.error('Failed to fetch routes:', error);
+        toast.error('Failed to load routes');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchRoutes();
+  }, []);
 
   useEffect(() => {
     let filtered = routes;
@@ -131,10 +148,17 @@ export default function Routes() {
         {/* Routes List */}
         <div className="space-y-4">
           <h2 className="text-2xl font-bold text-gray-900 mb-6">
-            Available Routes ({filteredRoutes.length})
+            {isLoading ? 'Loading Routes...' : `Available Routes (${filteredRoutes.length})`}
           </h2>
           
-          {filteredRoutes.length > 0 ? (
+          {isLoading ? (
+            <Card className="border-0 shadow-lg">
+              <CardContent className="p-8 text-center">
+                <Bus className="h-12 w-12 text-gray-400 mx-auto mb-4 animate-pulse" />
+                <p className="text-gray-600">Loading routes...</p>
+              </CardContent>
+            </Card>
+          ) : filteredRoutes.length > 0 ? (
             filteredRoutes.map((route) => (
               <Card key={route.id} className="border-0 shadow-lg hover:shadow-xl transition-shadow">
                 <CardContent className="p-6">
@@ -154,23 +178,23 @@ export default function Routes() {
                         <div className="flex items-center space-x-6 mt-3">
                           <div className="flex items-center space-x-1">
                             <Clock className="h-4 w-4 text-gray-500" />
-                            <span className="text-sm text-gray-600">{route.duration}</span>
+                            <span className="text-sm text-gray-600">{route.duration || 'N/A'}</span>
                           </div>
                           <div className="flex items-center space-x-1">
                             <MapPin className="h-4 w-4 text-gray-500" />
-                            <span className="text-sm text-gray-600">{route.distance}</span>
+                            <span className="text-sm text-gray-600">{route.distance || 'N/A'}</span>
                           </div>
                           <div className="flex items-center space-x-1">
                             <Users className="h-4 w-4 text-gray-500" />
-                            <span className="text-sm text-gray-600">{route.buses} buses</span>
+                            <span className="text-sm text-gray-600">{route.buses?.length || 0} buses</span>
                           </div>
                           <div className="flex items-center space-x-1">
                             <Star className="h-4 w-4 text-yellow-500 fill-current" />
-                            <span className="text-sm text-gray-600">{route.rating}</span>
+                            <span className="text-sm text-gray-600">{route.rating || '4.0'}</span>
                           </div>
                         </div>
                         <div className="flex flex-wrap gap-2 mt-3">
-                          {route.amenities.map((amenity, index) => (
+                          {(route.amenities || []).map((amenity: string, index: number) => (
                             <Badge key={index} variant="secondary">
                               {amenity}
                             </Badge>
@@ -179,7 +203,7 @@ export default function Routes() {
                       </div>
                     </div>
                     <div className="text-right">
-                      <div className="text-3xl font-bold text-gray-900 mb-2">{route.price}</div>
+                      <div className="text-3xl font-bold text-gray-900 mb-2">${route.base_price || 'N/A'}</div>
                       <p className="text-sm text-gray-600 mb-4">per person</p>
                       <Link href={`/routes/${route.id}/buses`}>
                         <Button size="lg" className="w-full">

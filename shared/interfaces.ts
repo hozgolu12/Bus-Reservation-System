@@ -10,11 +10,12 @@ export interface IUser {
   total_bookings: number;
   last_login: string;
   role: string;
+  token?: string;
 }
 
 export interface ITicket {
   id?: number;
-  user: number; // Assuming user ID
+  user: number;
   ticket_number?: string;
   passenger_name: string;
   passenger_email: string;
@@ -23,19 +24,19 @@ export interface ITicket {
   route_name: string;
   bus_id: string;
   bus_number: string;
-  departure_date: string; // Date string
-  departure_time: string; // Time string
-  arrival_time: string; // Time string
-  seat_numbers: number[]; // Array of seat numbers
+  departure_date: string;
+  departure_time: string;
+  arrival_time: string;
+  seat_numbers: number[];
   price_per_seat: number;
   total_price: number;
   status?: 'confirmed' | 'cancelled' | 'completed';
-  booking_date?: string; // DateTime string
-  updated_at?: string; // DateTime string
-  operator?: string; // Added for frontend display
-  amenities?: string[]; // Added for frontend display
-  feedback?: string; // Added for frontend display
-  rating?: number; // Added for frontend display
+  booking_date?: string;
+  updated_at?: string;
+  operator?: string;
+  amenities?: string[];
+  feedback?: string;
+  rating?: number;
 }
 
 export interface ISeat {
@@ -61,11 +62,11 @@ export interface IBus {
   rating?: number;
   amenities?: string[];
   is_active?: boolean;
-  route: IRoute; // Assuming IRoute is defined elsewhere
+  route: IRoute;
   route_id: number;
   created_at?: string;
   updated_at?: string;
-  available_seats?: number; // Virtual field
+  available_seats?: number;
 }
 
 export interface IRoute {
@@ -78,7 +79,39 @@ export interface IRoute {
   base_price: number;
   amenities?: string[];
   is_active?: boolean;
-  buses?: IBus[]; // One-to-many relationship
+  buses?: IBus[];
   created_at?: string;
   updated_at?: string;
+}
+
+export interface IOperator {
+  id: string;
+  username: string;
+  email: string;
+  company_name: string;
+  contact_phone: string;
+  is_active: boolean;
+  date_joined: string;
+  total_buses: number;
+  total_routes: number;
+  total_bookings: number;
+}
+
+export interface IAdminStats {
+  totalUsers: number;
+  totalOperators: number;
+  totalBuses: number;
+  activeBookings: number;
+  recentActivity: Array<{
+    id: string;
+    type: string;
+    action: string;
+    user: string;
+    time: string;
+  }>;
+  alerts: Array<{
+    id: string;
+    severity: 'info' | 'warning' | 'error';
+    message: string;
+  }>;
 }

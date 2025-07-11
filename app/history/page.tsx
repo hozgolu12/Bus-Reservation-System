@@ -20,6 +20,7 @@ export default function TravelHistory() {
   const [filteredTickets, setFilteredTickets] = useState<ITicket[]>([]);
   const [statusFilter, setStatusFilter] = useState('all');
   const [sortBy, setSortBy] = useState('recent');
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     if (!user) {
@@ -27,7 +28,24 @@ export default function TravelHistory() {
     }
   }, [user, router]);
 
-  
+  useEffect(() => {
+    const fetchTickets = async () => {
+      if (!user) return;
+      
+      try {
+        setIsLoading(true);
+        const response = await TicketAPI.getUserTickets(user.token);
+        setTickets(response.results || response);
+      } catch (error) {
+        console.error('Failed to fetch tickets:', error);
+        toast.error('Failed to fetch travel history');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchTickets();
+  }, [user]);
 
   useEffect(() => {
     let filtered = tickets;
@@ -196,16 +214,23 @@ export default function TravelHistory() {
         </Card>
 
         {/* Travel History List */}
-        {filteredTickets.length > 0 ? (
+        {isLoading ? (
+          <Card className="border-0 shadow-lg">
+            <CardContent className="p-12 text-center">
+              <IBus className="h-12 w-12 text-gray-400 mx-auto mb-4 animate-pulse" />
+              <p className="text-gray-600">Loading travel history...</p>
+            </CardContent>
+          </Card>
+        ) : filteredTickets.length > 0 ? (
           <div className="space-y-6">
             {filteredTickets.map((ticket) => (
               <Card key={ticket.id} className="border-0 shadow-lg">
                 <CardHeader className="pb-4">
                   <div className="flex items-center justify-between">
                     <div>
-                      <CardTitle className="text-xl">{ticket.route_name}</CardTitle>
+                      <CardTitle className="text-xl">{ticket.route_name || 'Route'}</CardTitle>
                       <CardDescription className="text-base mt-1">
-                        {ticket.bus_number} • {ticket.operator}
+                        {ticket.bus_number} • {ticket.operator || 'Operator'}
                       </CardDescription>
                     </div>
                     <div className="text-right">
@@ -213,7 +238,7 @@ export default function TravelHistory() {
                         {(ticket.status || '').charAt(0).toUpperCase() + (ticket.status || '').slice(1)}
                       </Badge>
                       <div className="text-sm text-gray-500 mt-1">
-                        {ticket.ticket_number}
+                        {ticket.ticket_number || 'N/A'}
                       </div>
                     </div>
                   </div>
@@ -226,21 +251,21 @@ export default function TravelHistory() {
                         <Calendar className="h-5 w-5 text-gray-500" />
                         <div>
                           <p className="font-medium">Travel Date</p>
-                          <p className="text-sm text-gray-600">{ticket.departure_date}</p>
+                          <p className="text-sm text-gray-600">{ticket.departure_date || 'N/A'}</p>
                         </div>
                       </div>
                       <div className="flex items-center space-x-3">
                         <Clock className="h-5 w-5 text-gray-500" />
                         <div>
                           <p className="font-medium">Time</p>
-                          <p className="text-sm text-gray-600">{ticket.departure_time} - {ticket.arrival_time}</p>
+                          <p className="text-sm text-gray-600">{ticket.departure_time || 'N/A'} - {ticket.arrival_time || 'N/A'}</p>
                         </div>
                       </div>
                       <div className="flex items-center space-x-3">
                         <Users className="h-5 w-5 text-gray-500" />
                         <div>
                           <p className="font-medium">Passenger</p>
-                          <p className="text-sm text-gray-600">{ticket.passenger_name}</p>
+                          <p className="text-sm text-gray-600">{ticket.passenger_name || 'N/A'}</p>
                         </div>
                       </div>
                       <div className="flex items-center space-x-3">
@@ -248,7 +273,7 @@ export default function TravelHistory() {
                         <div>
                           <p className="font-medium">Seats</p>
                           <div className="flex flex-wrap gap-1 mt-1">
-                            {ticket.seat_numbers.map((seat, index) => (
+                            {(ticket.seat_numbers || []).map((seat: number, index: number) => (
                               <Badge key={index} variant="outline">
                                 {seat}
                               </Badge>
@@ -283,7 +308,7 @@ export default function TravelHistory() {
                       )}
                       <div>
                         <p className="font-medium">Total Price</p>
-                        <p className="text-2xl font-bold text-gray-900">${ticket.total_price}</p>
+                        <p className="text-2xl font-bold text-gray-900">${ticket.total_price || 0}</p>
                       </div>
                       {ticket.feedback && (
                         <div>
@@ -299,7 +324,7 @@ export default function TravelHistory() {
                       <Separator className="my-6" />
                       <div className="flex items-center justify-between">
                         <div className="text-sm text-gray-500">
-                          Booked on {ticket.booking_date}
+                          Booked on {ticket.booking_date ? new Date(ticket.booking_date).toLocaleDateString() : 'N/A'}
                         </div>
                         <div className="flex items-center space-x-3">
                           <Button variant="outline" size="sm">

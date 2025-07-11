@@ -15,6 +15,7 @@ export default function Buses() {
   const params = useParams();
   const [route, setRoute] = useState(null);
   const [buses, setBuses] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     if (!user) {
@@ -23,26 +24,29 @@ export default function Buses() {
   }, [user, router]);
 
   useEffect(() => {
-    
     const fetchRouteAndBuses = async () => {
-      if (!token) return;
+      if (!params.routeId) return;
 
       try {
-        const allRoutes = await OperatorAPI.getMyRoutes(token);
-        const currentRoute = allRoutes.find((r: any) => r.id === params.routeId);
-        setRoute(currentRoute);
-
-        const allBuses = await OperatorAPI.getMyBuses(token);
-        const busesForRoute = allBuses.filter((bus: any) => bus.route_id === params.routeId);
-        setBuses(busesForRoute);
+        setIsLoading(true);
+        
+        // Fetch route details
+        const routeData = await RoutesAPI.getRoute(Number(params.routeId));
+        setRoute(routeData);
+        
+        // Fetch buses for this route
+        const busesData = await RoutesAPI.getBusesByRoute(Number(params.routeId));
+        setBuses(busesData.buses || []);
       } catch (error) {
         console.error("Failed to fetch route or buses:", error);
-        // Handle error, e.g., show a toast message
+        toast.error('Failed to load route information');
+      } finally {
+        setIsLoading(false);
       }
     };
 
     fetchRouteAndBuses();
-  }, [params.routeId]);
+  }, [params.routeId, token]);
 
   const getAmenityIcon = (amenity: string) => {
     switch (amenity.toLowerCase()) {
@@ -63,12 +67,26 @@ export default function Buses() {
     return null;
   }
 
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center">
+        <div className="text-center">
+          <Bus className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+          <p className="text-gray-600">Loading route information...</p>
+        </div>
+      </div>
+    );
+  }
+
   if (!route) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center">
         <div className="text-center">
           <Bus className="h-12 w-12 text-gray-400 mx-auto mb-4" />
           <p className="text-gray-600">Route not found</p>
+          <Link href="/routes">
+            <Button className="mt-4">Back to Routes</Button>
+          </Link>
         </div>
       </div>
     );
@@ -139,41 +157,50 @@ export default function Buses() {
                       <div>
                         <h3 className="font-semibold text-xl text-gray-900">{bus.busNumber}</h3>
                         <p className="text-gray-600">{bus.type} • {bus.operator}</p>
-                        <div className="flex items-center space-x-6 mt-3">
-                          <div className="flex items-center space-x-1">
-                            <Clock className="h-4 w-4 text-gray-500" />
-                            <span className="text-sm text-gray-600">{bus.departureTime} - {bus.arrivalTime}</span>
+                        <div className="grid md:grid-cols-2 gap-4 text-sm text-gray-600">
+                          <div className="space-y-1">
+                            <div className="flex items-center space-x-2">
+                              <span className="font-medium">Route:</span>
+                              <span>{route.name}</span>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <Clock className="h-4 w-4" />
+                              <span>{bus.departureTime} - {bus.arrivalTime}</span>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <Users className="h-4 w-4" />
+                              <span>{bus.available_seats || bus.total_seats}/{bus.total_seats} seats available</span>
+                            </div>
                           </div>
-                          <div className="flex items-center space-x-1">
-                            <Users className="h-4 w-4 text-gray-500" />
-                            <span className="text-sm text-gray-600">{bus.availableSeats}/{bus.totalSeats} seats</span>
-                          </div>
-                          <div className="flex items-center space-x-1">
-                            <Star className="h-4 w-4 text-yellow-500 fill-current" />
-                            <span className="text-sm text-gray-600">{bus.rating}</span>
+                          <div className="space-y-1">
+                            <div className="flex items-center space-x-2">
+                              <Star className="h-4 w-4 text-yellow-500 fill-current" />
+                              <span>{bus.rating || '4.0'} rating</span>
+                            </div>
                           </div>
                         </div>
-                        <div className="flex flex-wrap gap-2 mt-3">
-                          {bus.amenities.map((amenity, index) => (
-                            <Badge key={index} variant="secondary" className="flex items-center space-x-1">
-                              {getAmenityIcon(amenity)}
-                              <span>{amenity}</span>
-                            </Badge>
-                          ))}
+                        <div className="mt-3">
+                          <div className="flex flex-wrap gap-1">
+                            {(bus.amenities || []).map((amenity: string, index: number) => (
+                              <Badge key={index} variant="outline" className="text-xs">
+                                {amenity}
+                              </Badge>
+                            ))}
+                          </div>
                         </div>
                       </div>
                     </div>
                     <div className="text-right">
-                      <div className="text-3xl font-bold text-gray-900 mb-2">{bus.price}</div>
+                      <div className="text-3xl font-bold text-gray-900 mb-2">${bus.price}</div>
                       <p className="text-sm text-gray-600 mb-4">per person</p>
                       <div className="mb-4">
-                        <Badge variant={bus.availableSeats > 10 ? "default" : "destructive"}>
-                          {bus.availableSeats > 10 ? "Available" : "Limited Seats"}
+                        <Badge variant={(bus.available_seats || 0) > 10 ? "default" : "destructive"}>
+                          {(bus.available_seats || 0) > 10 ? "Available" : "Limited Seats"}
                         </Badge>
                       </div>
                       <Link href={`/buses/${bus.id}/book`}>
-                        <Button size="lg" className="w-full" disabled={bus.availableSeats === 0}>
-                          {bus.availableSeats === 0 ? "Sold Out" : "Select Seats"}
+                        <Button size="lg" className="w-full" disabled={(bus.available_seats || 0) === 0}>
+                          {(bus.available_seats || 0) === 0 ? "Sold Out" : "Select Seats"}
                         </Button>
                       </Link>
                     </div>
