@@ -12,6 +12,8 @@ import { Bus as IBus, MapPin, Clock, Calendar, Users, Star, ArrowLeft, Filter, D
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import Link from 'next/link';
 import { ITicket } from '@/shared/interfaces';
+import { TicketAPI } from '@/lib/api';
+import { toast } from 'sonner';
 
 export default function TravelHistory() {
   const { user } = useAuth();
@@ -34,7 +36,7 @@ export default function TravelHistory() {
       
       try {
         setIsLoading(true);
-        const response = await TicketAPI.getUserTickets(user.token);
+        const response = await TicketAPI.getUserTickets(user.token || '');
         setTickets(response.results || response);
       } catch (error) {
         console.error('Failed to fetch tickets:', error);

@@ -8,6 +8,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Bus, MapPin, Clock, Users, Star, Wifi, Zap, Coffee, Monitor, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
+import { RoutesAPI } from '@/lib/api';
+import { toast } from 'sonner';
 
 export default function Buses() {
   const { user } = useAuth();
@@ -46,7 +48,7 @@ export default function Buses() {
     };
 
     fetchRouteAndBuses();
-  }, [params.routeId, token]);
+    }, [params.routeId]);
 
   const getAmenityIcon = (amenity: string) => {
     switch (amenity.toLowerCase()) {

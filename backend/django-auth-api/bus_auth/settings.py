@@ -23,6 +23,9 @@ INSTALLED_APPS = [
     'tickets',
 ]
 
+# Custom user model
+AUTH_USER_MODEL = 'authentication.User'
+
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',

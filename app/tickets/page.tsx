@@ -10,6 +10,7 @@ import { Separator } from '@/components/ui/separator';
 import { Bus, MapPin, Clock, Calendar, Users, QrCode, Download, X, Plus } from 'lucide-react';
 import { toast } from 'sonner';
 import Link from 'next/link';
+import { TicketAPI } from '@/lib/api';
 
 export default function Tickets() {
   const { user } = useAuth();
@@ -29,7 +30,7 @@ export default function Tickets() {
       
       try {
         setIsLoading(true);
-        const response = await TicketAPI.getUserTickets(user.token);
+        const response = await TicketAPI.getUserTickets(user.token || '');
         setTickets(response.results || response);
       } catch (error) {
         console.error('Failed to fetch tickets:', error);
@@ -46,7 +47,7 @@ export default function Tickets() {
     if (!user) return;
     
     try {
-      await TicketAPI.cancelTicket(user.token, Number(ticketId));
+      await TicketAPI.cancelTicket(user.token || '', Number(ticketId));
       setTickets(prev => prev.filter((ticket: any) => ticket.id !== ticketId));
       toast.success('Ticket cancelled successfully');
     } catch (error) {

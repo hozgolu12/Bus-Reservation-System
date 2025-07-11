@@ -1,7 +1,8 @@
 'use client';
 
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { getUserFromToken } from '@/lib/auth';
+import { getUserFromToken } from '@/lib/auth.tsx';
+import { AuthAPI } from '@/lib/api';
 
 export interface User {
   id: string;
@@ -43,7 +44,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     try {
       const data = await AuthAPI.getProfile(authToken);
       return {
-        id: data.id,
+        id: data.id?.toString() || '',
         username: data.username,
         email: data.email,
         role: data.role || 'user',
