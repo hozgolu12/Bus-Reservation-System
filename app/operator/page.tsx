@@ -45,26 +45,8 @@ export default function OperatorDashboard() {
       if (!token) return;
       
       try {
-        // Mock data for now - replace with actual API call
-        const mockStats = {
-          totalBuses: 15,
-          totalRoutes: 8,
-          activeBookings: 42,
-          monthlyRevenue: 12450,
-          recentBookings: [
-            { id: 1, passenger: 'John Doe', route: 'NYC → Boston', bus: 'NYC-101', date: '2025-07-10', amount: 45 },
-            { id: 2, passenger: 'Jane Smith', route: 'NYC → Boston', bus: 'NYC-102', date: '2025-07-10', amount: 40 },
-            { id: 3, passenger: 'Mike Wilson', route: 'NYC → Philadelphia', bus: 'PHL-301', date: '2025-07-09', amount: 35 },
-            { id: 4, passenger: 'Sarah Brown', route: 'NYC → Boston', bus: 'NYC-101', date: '2025-07-09', amount: 45 },
-          ],
-          topRoutes: [
-            { route: 'NYC → Boston', bookings: 156, revenue: 6240 },
-            { route: 'NYC → Philadelphia', bookings: 89, revenue: 3115 },
-            { route: 'Boston → NYC', bookings: 134, revenue: 5360 },
-          ]
-        };
-        
-        setStats(mockStats);
+        const fetchedStats = await OperatorAPI.getDashboardStats(token);
+        setStats(fetchedStats);
       } catch (error) {
         toast.error('Failed to fetch dashboard stats');
       } finally {

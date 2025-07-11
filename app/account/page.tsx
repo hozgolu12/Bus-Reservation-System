@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { 
-  User, 
+  User as UserIcon, 
   Mail, 
   Phone, 
   Calendar, 
@@ -23,6 +23,7 @@ import {
 import Link from 'next/link';
 import { UserAccountAPI } from '@/lib/admin-api';
 import { toast } from 'sonner';
+import { IUser } from '@/shared/interfaces';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -38,13 +39,18 @@ import {
 export default function UserAccount() {
   const { user, token, logout } = useAuth();
   const router = useRouter();
-  const [profile, setProfile] = useState({
+  const [profile, setProfile] = useState<IUser>({
+    id: '',
     username: '',
     email: '',
     phone_number: '',
     date_of_birth: '',
     first_name: '',
-    last_name: ''
+    last_name: '',
+    date_joined: '',
+    total_bookings: 0,
+    last_login: '',
+    role: ''
   });
   const [passwordData, setPasswordData] = useState({
     current_password: '',
@@ -66,20 +72,8 @@ export default function UserAccount() {
       if (!token) return;
       
       try {
-        // Mock data for now - replace with actual API call
-        const mockProfile = {
-          username: user?.username || 'john_doe',
-          email: user?.email || 'john@example.com',
-          phone_number: '+1-555-0123',
-          date_of_birth: '1990-05-15',
-          first_name: 'John',
-          last_name: 'Doe',
-          date_joined: '2025-01-15',
-          total_bookings: 12,
-          last_login: '2025-07-09'
-        };
-        
-        setProfile(mockProfile);
+        const fetchedProfile = await UserAccountAPI.getProfile(token);
+        setProfile(fetchedProfile);
       } catch (error) {
         toast.error('Failed to fetch profile');
       } finally {
@@ -95,8 +89,7 @@ export default function UserAccount() {
     setIsSaving(true);
     
     try {
-      // Mock update - replace with actual API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await UserAccountAPI.updateProfile(token, profile);
       toast.success('Profile updated successfully');
     } catch (error) {
       toast.error('Failed to update profile');
@@ -114,8 +107,10 @@ export default function UserAccount() {
     }
     
     try {
-      // Mock password change - replace with actual API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await UserAccountAPI.changePassword(token, {
+        current_password: passwordData.current_password,
+        new_password: passwordData.new_password
+      });
       setPasswordData({
         current_password: '',
         new_password: '',
@@ -129,8 +124,7 @@ export default function UserAccount() {
 
   const handleDeleteAccount = async () => {
     try {
-      // Mock account deletion - replace with actual API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await UserAccountAPI.deleteAccount(token);
       toast.success('Account deleted successfully');
       logout();
       router.push('/');
@@ -147,7 +141,7 @@ export default function UserAccount() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center">
         <div className="text-center">
-          <User className="h-12 w-12 text-blue-600 mx-auto mb-4 animate-pulse" />
+          <UserIcon className="h-12 w-12 text-blue-600 mx-auto mb-4 animate-pulse" />
           <p className="text-gray-600">Loading account...</p>
         </div>
       </div>
@@ -167,7 +161,7 @@ export default function UserAccount() {
               </Link>
             </div>
             <div className="flex items-center space-x-4">
-              <User className="h-6 w-6 text-blue-600" />
+              <UserIcon className="h-6 w-6 text-blue-600" />
               <span className="text-gray-700">My Account</span>
             </div>
           </div>
@@ -187,7 +181,7 @@ export default function UserAccount() {
             <Card className="border-0 shadow-lg">
               <CardHeader className="text-center">
                 <div className="mx-auto w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mb-4">
-                  <User className="h-10 w-10 text-blue-600" />
+                  <UserIcon className="h-10 w-10 text-blue-600" />
                 </div>
                 <CardTitle>{profile.first_name} {profile.last_name}</CardTitle>
                 <CardDescription>{profile.email}</CardDescription>
@@ -206,7 +200,7 @@ export default function UserAccount() {
                     <span>Last login {profile.last_login}</span>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <User className="h-4 w-4 text-gray-500" />
+                    <UserIcon className="h-4 w-4 text-gray-500" />
                     <span>{profile.total_bookings} total bookings</span>
                   </div>
                 </div>

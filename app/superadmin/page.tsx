@@ -46,28 +46,8 @@ export default function SuperAdminDashboard() {
       if (!token) return;
       
       try {
-        // Mock data for now - replace with actual API call
-        const mockStats = {
-          totalUsers: 1247,
-          totalOperators: 23,
-          totalBuses: 156,
-          totalRoutes: 89,
-          activeBookings: 342,
-          revenue: 45670,
-          recentActivity: [
-            { id: 1, action: 'New operator registered', user: 'Metro Express', time: '2 hours ago', type: 'operator' },
-            { id: 2, action: 'Bus route updated', user: 'City Transport', time: '4 hours ago', type: 'route' },
-            { id: 3, action: 'User account blocked', user: 'john@example.com', time: '6 hours ago', type: 'user' },
-            { id: 4, action: 'New bus added', user: 'Express Lines', time: '8 hours ago', type: 'bus' },
-          ],
-          alerts: [
-            { id: 1, message: 'High booking volume detected on NYC-Boston route', severity: 'warning' },
-            { id: 2, message: '3 operators pending verification', severity: 'info' },
-            { id: 3, message: 'System maintenance scheduled for tonight', severity: 'info' },
-          ]
-        };
-        
-        setStats(mockStats);
+        const fetchedStats = await AdminAPI.getDashboardStats(token);
+        setStats(fetchedStats);
       } catch (error) {
         toast.error('Failed to fetch dashboard stats');
       } finally {

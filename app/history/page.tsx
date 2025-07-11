@@ -8,15 +8,16 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Bus, MapPin, Clock, Calendar, Users, Star, ArrowLeft, Filter, Download } from 'lucide-react';
+import { Bus as IBus, MapPin, Clock, Calendar, Users, Star, ArrowLeft, Filter, Download } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import Link from 'next/link';
+import { ITicket } from '@/shared/interfaces';
 
 export default function TravelHistory() {
   const { user } = useAuth();
   const router = useRouter();
-  const [tickets, setTickets] = useState([]);
-  const [filteredTickets, setFilteredTickets] = useState([]);
+  const [tickets, setTickets] = useState<ITicket[]>([]);
+  const [filteredTickets, setFilteredTickets] = useState<ITicket[]>([]);
   const [statusFilter, setStatusFilter] = useState('all');
   const [sortBy, setSortBy] = useState('recent');
 
@@ -26,108 +27,7 @@ export default function TravelHistory() {
     }
   }, [user, router]);
 
-  useEffect(() => {
-    // Mock data - replace with actual API call
-    const today = new Date();
-    const formatDate = (date) => {
-      return date.toISOString().split('T')[0];
-    };
-    
-    const mockTickets = [
-      {
-        id: '1',
-        ticketNumber: 'TKT-2025-001',
-        route: 'New York → Boston',
-        bus: 'NYC-101 (Luxury Coach)',
-        operator: 'Express Lines',
-        passengerName: 'John Doe',
-        seatNumbers: ['A12'],
-        date: formatDate(new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000)), // 30 days ago
-        departureTime: '08:30 AM',
-        arrivalTime: '01:00 PM',
-        price: 45,
-        status: 'completed',
-        bookingDate: formatDate(new Date(today.getTime() - 35 * 24 * 60 * 60 * 1000)), // 35 days ago
-        rating: 4.5,
-        amenities: ['WiFi', 'AC', 'Charging Ports', 'Snacks'],
-        feedback: 'Great journey! Very comfortable seats and punctual service.'
-      },
-      {
-        id: '2',
-        ticketNumber: 'TKT-2025-002',
-        route: 'Boston → Washington DC',
-        bus: 'DC-201 (Standard Coach)',
-        operator: 'Capital Express',
-        passengerName: 'Jane Smith',
-        seatNumbers: ['B08', 'B09'],
-        date: formatDate(new Date(today.getTime() - 20 * 24 * 60 * 60 * 1000)), // 20 days ago
-        departureTime: '02:15 PM',
-        arrivalTime: '06:30 PM',
-        price: 130,
-        status: 'completed',
-        bookingDate: formatDate(new Date(today.getTime() - 25 * 24 * 60 * 60 * 1000)), // 25 days ago
-        rating: 4.2,
-        amenities: ['WiFi', 'AC', 'Charging Ports'],
-        feedback: 'Good service overall. Bus was clean and on time.'
-      },
-      {
-        id: '3',
-        ticketNumber: 'TKT-2025-003',
-        route: 'New York → Philadelphia',
-        bus: 'PHL-301 (Premium Express)',
-        operator: 'Liberty Lines',
-        passengerName: 'Mike Johnson',
-        seatNumbers: ['C15'],
-        date: formatDate(new Date(today.getTime() - 10 * 24 * 60 * 60 * 1000)), // 10 days ago
-        departureTime: '10:00 AM',
-        arrivalTime: '12:00 PM',
-        price: 55,
-        status: 'completed',
-        bookingDate: formatDate(new Date(today.getTime() - 15 * 24 * 60 * 60 * 1000)), // 15 days ago
-        rating: 5.0,
-        amenities: ['WiFi', 'AC', 'Premium Seats', 'Entertainment'],
-        feedback: 'Excellent service! Premium seats were very comfortable.'
-      },
-      {
-        id: '4',
-        ticketNumber: 'TKT-2025-004',
-        route: 'Philadelphia → New York',
-        bus: 'NYC-205 (Express)',
-        operator: 'Express Lines',
-        passengerName: 'Sarah Wilson',
-        seatNumbers: ['D20'],
-        date: formatDate(new Date(today.getTime() - 45 * 24 * 60 * 60 * 1000)), // 45 days ago
-        departureTime: '03:00 PM',
-        arrivalTime: '05:00 PM',
-        price: 40,
-        status: 'completed',
-        bookingDate: formatDate(new Date(today.getTime() - 50 * 24 * 60 * 60 * 1000)), // 50 days ago
-        rating: 4.0,
-        amenities: ['WiFi', 'AC', 'Charging Ports'],
-        feedback: 'Decent journey. Could improve the cleanliness.'
-      },
-      {
-        id: '5',
-        ticketNumber: 'TKT-2025-005',
-        route: 'Boston → New York',
-        bus: 'NYC-150 (Luxury)',
-        operator: 'Premium Travel',
-        passengerName: 'David Brown',
-        seatNumbers: ['A05', 'A06'],
-        date: formatDate(new Date(today.getTime() - 60 * 24 * 60 * 60 * 1000)), // 60 days ago
-        departureTime: '09:00 AM',
-        arrivalTime: '01:30 PM',
-        price: 100,
-        status: 'cancelled',
-        bookingDate: formatDate(new Date(today.getTime() - 65 * 24 * 60 * 60 * 1000)), // 65 days ago
-        rating: null,
-        amenities: ['WiFi', 'AC', 'Premium Seats', 'Meals'],
-        feedback: null
-      }
-    ];
-
-    setTickets(mockTickets);
-  }, []);
+  
 
   useEffect(() => {
     let filtered = tickets;
@@ -141,13 +41,13 @@ export default function TravelHistory() {
     filtered.sort((a, b) => {
       switch (sortBy) {
         case 'recent':
-          return new Date(b.date).getTime() - new Date(a.date).getTime();
+          return new Date(b.departure_date).getTime() - new Date(a.departure_date).getTime();
         case 'oldest':
-          return new Date(a.date).getTime() - new Date(b.date).getTime();
+          return new Date(a.departure_date).getTime() - new Date(b.departure_date).getTime();
         case 'price-high':
-          return b.price - a.price;
+          return b.total_price - a.total_price;
         case 'price-low':
-          return a.price - b.price;
+          return a.total_price - b.total_price;
         case 'rating':
           return (b.rating || 0) - (a.rating || 0);
         default:
@@ -182,7 +82,7 @@ export default function TravelHistory() {
 
   const completedTickets = filteredTickets.filter(t => t.status === 'completed');
   const cancelledTickets = filteredTickets.filter(t => t.status === 'cancelled');
-  const totalSpent = completedTickets.reduce((sum, ticket) => sum + ticket.price, 0);
+  const totalSpent = completedTickets.reduce((sum, ticket) => sum + ticket.total_price, 0);
   const averageRating = completedTickets.reduce((sum, ticket) => sum + (ticket.rating || 0), 0) / completedTickets.length;
 
   if (!user) {
@@ -196,7 +96,7 @@ export default function TravelHistory() {
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <Link href="/dashboard" className="flex items-center space-x-2">
-              <Bus className="h-8 w-8 text-blue-600" />
+              <IBus className="h-8 w-8 text-blue-600" />
               <span className="text-2xl font-bold text-gray-900">BusGo</span>
             </Link>
             <div className="flex items-center space-x-4">
@@ -303,17 +203,17 @@ export default function TravelHistory() {
                 <CardHeader className="pb-4">
                   <div className="flex items-center justify-between">
                     <div>
-                      <CardTitle className="text-xl">{ticket.route}</CardTitle>
+                      <CardTitle className="text-xl">{ticket.route_name}</CardTitle>
                       <CardDescription className="text-base mt-1">
-                        {ticket.bus} • {ticket.operator}
+                        {ticket.bus_number} • {ticket.operator}
                       </CardDescription>
                     </div>
                     <div className="text-right">
-                      <Badge className={getStatusColor(ticket.status)}>
-                        {ticket.status.charAt(0).toUpperCase() + ticket.status.slice(1)}
+                      <Badge className={getStatusColor(ticket.status ?? '')}>
+                        {(ticket.status || '').charAt(0).toUpperCase() + (ticket.status || '').slice(1)}
                       </Badge>
                       <div className="text-sm text-gray-500 mt-1">
-                        {ticket.ticketNumber}
+                        {ticket.ticket_number}
                       </div>
                     </div>
                   </div>
@@ -326,21 +226,21 @@ export default function TravelHistory() {
                         <Calendar className="h-5 w-5 text-gray-500" />
                         <div>
                           <p className="font-medium">Travel Date</p>
-                          <p className="text-sm text-gray-600">{ticket.date}</p>
+                          <p className="text-sm text-gray-600">{ticket.departure_date}</p>
                         </div>
                       </div>
                       <div className="flex items-center space-x-3">
                         <Clock className="h-5 w-5 text-gray-500" />
                         <div>
                           <p className="font-medium">Time</p>
-                          <p className="text-sm text-gray-600">{ticket.departureTime} - {ticket.arrivalTime}</p>
+                          <p className="text-sm text-gray-600">{ticket.departure_time} - {ticket.arrival_time}</p>
                         </div>
                       </div>
                       <div className="flex items-center space-x-3">
                         <Users className="h-5 w-5 text-gray-500" />
                         <div>
                           <p className="font-medium">Passenger</p>
-                          <p className="text-sm text-gray-600">{ticket.passengerName}</p>
+                          <p className="text-sm text-gray-600">{ticket.passenger_name}</p>
                         </div>
                       </div>
                       <div className="flex items-center space-x-3">
@@ -348,7 +248,7 @@ export default function TravelHistory() {
                         <div>
                           <p className="font-medium">Seats</p>
                           <div className="flex flex-wrap gap-1 mt-1">
-                            {ticket.seatNumbers.map((seat, index) => (
+                            {ticket.seat_numbers.map((seat, index) => (
                               <Badge key={index} variant="outline">
                                 {seat}
                               </Badge>
@@ -363,7 +263,7 @@ export default function TravelHistory() {
                       <div>
                         <p className="font-medium mb-2">Amenities</p>
                         <div className="flex flex-wrap gap-1">
-                          {ticket.amenities.map((amenity, index) => (
+                          {ticket.amenities && ticket.amenities.map((amenity, index) => (
                             <Badge key={index} variant="secondary" className="text-xs">
                               {amenity}
                             </Badge>
@@ -383,12 +283,12 @@ export default function TravelHistory() {
                       )}
                       <div>
                         <p className="font-medium">Total Price</p>
-                        <p className="text-2xl font-bold text-gray-900">${ticket.price}</p>
+                        <p className="text-2xl font-bold text-gray-900">${ticket.total_price}</p>
                       </div>
                       {ticket.feedback && (
                         <div>
                           <p className="font-medium mb-2">Your Feedback</p>
-                          <p className="text-sm text-gray-600 italic">"{ticket.feedback}"</p>
+                          <p className="text-sm text-gray-600 italic">`${ticket.feedback}`</p>
                         </div>
                       )}
                     </div>
@@ -399,7 +299,7 @@ export default function TravelHistory() {
                       <Separator className="my-6" />
                       <div className="flex items-center justify-between">
                         <div className="text-sm text-gray-500">
-                          Booked on {ticket.bookingDate}
+                          Booked on {ticket.booking_date}
                         </div>
                         <div className="flex items-center space-x-3">
                           <Button variant="outline" size="sm">
@@ -420,11 +320,11 @@ export default function TravelHistory() {
         ) : (
           <Card className="border-0 shadow-lg">
             <CardContent className="p-12 text-center">
-              <Bus className="h-16 w-16 text-gray-400 mx-auto mb-6" />
+              <IBus className="h-16 w-16 text-gray-400 mx-auto mb-6" />
               <h3 className="text-xl font-semibold text-gray-900 mb-2">No Travel History Found</h3>
               <p className="text-gray-600 mb-6">
                 {statusFilter === 'all' 
-                  ? "You haven't completed any journeys yet" 
+                  ? 'You haven&apos;t completed any journeys yet' 
                   : `No ${statusFilter} trips found`}
               </p>
               <Link href="/routes">

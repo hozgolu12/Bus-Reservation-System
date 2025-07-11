@@ -20,7 +20,6 @@ import {
   Edit
 } from 'lucide-react';
 import Link from 'next/link';
-import { AdminAPI } from '@/lib/admin-api';
 import { toast } from 'sonner';
 import {
   Dialog,
@@ -57,59 +56,8 @@ export default function ManageOperators() {
       if (!token) return;
       
       try {
-        // Mock data for now - replace with actual API call
-        const mockOperators = [
-          {
-            id: '1',
-            username: 'metro_express',
-            email: 'admin@metroexpress.com',
-            company_name: 'Metro Express Lines',
-            contact_phone: '+1-555-0101',
-            dateJoined: '2025-01-10',
-            isActive: true,
-            totalBuses: 15,
-            totalRoutes: 8,
-            totalBookings: 342
-          },
-          {
-            id: '2',
-            username: 'city_transport',
-            email: 'contact@citytransport.com',
-            company_name: 'City Transport Co.',
-            contact_phone: '+1-555-0102',
-            dateJoined: '2025-03-05',
-            isActive: true,
-            totalBuses: 12,
-            totalRoutes: 6,
-            totalBookings: 278
-          },
-          {
-            id: '3',
-            username: 'express_lines',
-            email: 'info@expresslines.com',
-            company_name: 'Express Lines Ltd.',
-            contact_phone: '+1-555-0103',
-            dateJoined: '2025-02-15',
-            isActive: true,
-            totalBuses: 20,
-            totalRoutes: 12,
-            totalBookings: 456
-          },
-          {
-            id: '4',
-            username: 'premium_travel',
-            email: 'support@premiumtravel.com',
-            company_name: 'Premium Travel Services',
-            contact_phone: '+1-555-0104',
-            dateJoined: '2025-04-20',
-            isActive: false,
-            totalBuses: 8,
-            totalRoutes: 4,
-            totalBookings: 123
-          }
-        ];
-        
-        setOperators(mockOperators);
+        const Operators = await AdminAPI.getOperators(token);
+        setOperators(Operators);
       } catch (error) {
         toast.error('Failed to fetch operators');
       } finally {
@@ -124,17 +72,24 @@ export default function ManageOperators() {
     e.preventDefault();
     
     try {
-      // Mock creation - replace with actual API call
       const newOp = {
         id: Date.now().toString(),
         ...newOperator,
         dateJoined: new Date().toISOString().split('T')[0],
         isActive: true,
+      };
+
+      await AdminAPI.createOperator(token, newOp);
+      setOperators(prev => [newOp, ...prev]);
+      setShowCreateDialog(false);
+      setNewOperator({
+        username: '',
+        email: '',
         totalBuses: 0,
         totalRoutes: 0,
         totalBookings: 0
-      };
-      
+      });
+
       setOperators(prev => [newOp, ...prev]);
       setShowCreateDialog(false);
       setNewOperator({
@@ -152,6 +107,7 @@ export default function ManageOperators() {
 
   const handleDeleteOperator = async (operatorId: string) => {
     try {
+      await AdminAPI.deleteOperator(token, operatorId);
       setOperators(prev => prev.filter(op => op.id !== operatorId));
       toast.success('Operator deleted successfully');
     } catch (error) {

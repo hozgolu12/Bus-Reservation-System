@@ -26,80 +26,7 @@ export default function Routes() {
     }
   }, [user, router]);
 
-  const routes = [
-    {
-      id: '1',
-      name: 'NYC Express',
-      source: 'New York',
-      destination: 'Boston',
-      distance: '215 miles',
-      duration: '4h 30m',
-      price: '$45',
-      buses: 12,
-      rating: 4.5,
-      amenities: ['WiFi', 'AC', 'Charging Ports', 'Snacks']
-    },
-    {
-      id: '2',
-      name: 'Capital Corridor',
-      source: 'New York',
-      destination: 'Washington DC',
-      distance: '225 miles',
-      duration: '4h 15m',
-      price: '$55',
-      buses: 8,
-      rating: 4.3,
-      amenities: ['WiFi', 'AC', 'Reclining Seats', 'Movies']
-    },
-    {
-      id: '3',
-      name: 'Liberty Line',
-      source: 'New York',
-      destination: 'Philadelphia',
-      distance: '95 miles',
-      duration: '2h 00m',
-      price: '$35',
-      buses: 15,
-      rating: 4.7,
-      amenities: ['WiFi', 'AC', 'Charging Ports', 'Snacks']
-    },
-    {
-      id: '4',
-      name: 'Coastal Express',
-      source: 'Boston',
-      destination: 'Portland',
-      distance: '105 miles',
-      duration: '2h 30m',
-      price: '$40',
-      buses: 6,
-      rating: 4.4,
-      amenities: ['WiFi', 'AC', 'Scenic Views', 'Snacks']
-    },
-    {
-      id: '5',
-      name: 'Metro Connect',
-      source: 'Washington DC',
-      destination: 'Baltimore',
-      distance: '40 miles',
-      duration: '1h 15m',
-      price: '$25',
-      buses: 20,
-      rating: 4.6,
-      amenities: ['WiFi', 'AC', 'Charging Ports', 'Express Service']
-    },
-    {
-      id: '6',
-      name: 'Sunshine Route',
-      source: 'Miami',
-      destination: 'Orlando',
-      distance: '235 miles',
-      duration: '3h 45m',
-      price: '$50',
-      buses: 10,
-      rating: 4.2,
-      amenities: ['WiFi', 'AC', 'Reclining Seats', 'Entertainment']
-    }
-  ];
+  const [routes, setRoutes] = useState([]);
 
   useEffect(() => {
     let filtered = routes;
@@ -117,7 +44,7 @@ export default function Routes() {
     }
     
     setFilteredRoutes(filtered);
-  }, [searchFrom, searchTo]);
+  }, [searchFrom, searchTo]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!user) {
     return null;

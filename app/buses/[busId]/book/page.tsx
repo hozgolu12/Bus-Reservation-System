@@ -9,17 +9,19 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { Bus, MapPin, Clock, Users, Star, ArrowLeft, User, Phone, Mail, CreditCard } from 'lucide-react';
+import { Bus as BusIcon, MapPin, Clock, Users, Star, ArrowLeft, User as UserIcon, Phone, Mail } from 'lucide-react';
 import { toast } from 'sonner';
 import Link from 'next/link';
 import { BusAPI } from '@/lib/api';
+
+import { IBus, ISeat } from '@/shared/interfaces';
 
 export default function BookBus() {
   const { user } = useAuth();
   const router = useRouter();
   const params = useParams();
-  const [bus, setBus] = useState(null);
-  const [selectedSeats, setSelectedSeats] = useState([]);
+  const [bus, setBus] = useState<IBus | null>(null);
+  const [selectedSeats, setSelectedSeats] = useState<number[]>([]);
   const [passengerName, setPassengerName] = useState('');
   const [passengerPhone, setPassengerPhone] = useState('');
   const [passengerEmail, setPassengerEmail] = useState('');
@@ -47,7 +49,7 @@ export default function BookBus() {
   }, [params.busId]);
 
   const handleSeatClick = (seatNumber: number) => {
-    if (bus.seat_map.find(s => s.number === seatNumber)?.isOccupied) {
+    if (!bus || bus.seat_map.find(s => s.number === seatNumber)?.isOccupied) {
       return;
     }
 
@@ -60,7 +62,7 @@ export default function BookBus() {
     });
   };
 
-  const getSeatClass = (seat) => {
+  const getSeatClass = (seat: ISeat) => {
     let baseClass = 'w-8 h-8 rounded-md border-2 cursor-pointer transition-all hover:scale-110 flex items-center justify-center text-xs font-semibold';
     
     if (seat.isOccupied) {
@@ -88,7 +90,8 @@ export default function BookBus() {
     setIsLoading(true);
 
     try {
-      await BusAPI.reserveSeats(bus.id, { seat_numbers: selectedSeats, user_id: user.id });
+      if (!bus || !user) return; // Add null check for bus and user
+      await BusAPI.reserveSeats(Number(bus.id), { seat_numbers: selectedSeats, user_id: Number(user.id) });
       
       toast.success(`Booking confirmed! ${selectedSeats.length} seat${selectedSeats.length > 1 ? 's' : ''} reserved successfully.`);
       router.push('/tickets');
@@ -107,7 +110,7 @@ export default function BookBus() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center">
         <div className="text-center">
-          <Bus className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+          <BusIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
           <p className="text-gray-600">Loading bus details...</p>
         </div>
       </div>
@@ -123,7 +126,7 @@ export default function BookBus() {
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <Link href="/dashboard" className="flex items-center space-x-2">
-              <Bus className="h-8 w-8 text-blue-600" />
+              <BusIcon className="h-8 w-8 text-blue-600" />
               <span className="text-2xl font-bold text-gray-900">BusGo</span>
             </Link>
             <div className="flex items-center space-x-4">
@@ -178,7 +181,7 @@ export default function BookBus() {
                 <div className="bg-gray-50 rounded-lg p-6">
                   <div className="text-center mb-4">
                     <div className="inline-flex items-center space-x-2 bg-gray-200 px-4 py-2 rounded-full">
-                      <Bus className="h-4 w-4" />
+                      <BusIcon className="h-4 w-4" />
                       <span className="text-sm font-medium">Driver</span>
                     </div>
                   </div>
@@ -260,7 +263,7 @@ export default function BookBus() {
                   <span className="text-sm">{bus.rating} Rating</span>
                 </div>
                 <div className="flex flex-wrap gap-1">
-                  {bus.amenities.map((amenity, index) => (
+                  {bus.amenities && bus.amenities.map((amenity, index) => (
                     <Badge key={index} variant="secondary" className="text-xs">
                       {amenity}
                     </Badge>
@@ -278,7 +281,7 @@ export default function BookBus() {
                 <div className="space-y-2">
                   <Label htmlFor="name">Full Name</Label>
                   <div className="relative">
-                    <User className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                    <UserIcon className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                     <Input
                       id="name"
                       placeholder="Enter passenger name"

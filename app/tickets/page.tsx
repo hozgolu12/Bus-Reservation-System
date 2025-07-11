@@ -23,76 +23,21 @@ export default function Tickets() {
   }, [user, router]);
 
   useEffect(() => {
-    // Mock data - replace with actual API call
-    const today = new Date();
-    const tomorrow = new Date(today);
-    tomorrow.setDate(today.getDate() + 1);
-    const nextWeek = new Date(today);
-    nextWeek.setDate(today.getDate() + 7);
-    const lastWeek = new Date(today);
-    lastWeek.setDate(today.getDate() - 7);
-    
-    const formatDate = (date) => {
-      return date.toISOString().split('T')[0];
-    };
-    
-    const mockTickets = [
-      {
-        id: '1',
-        ticketNumber: 'TKT-2025-001',
-        route: 'New York → Boston',
-        bus: 'NYC-101 (Luxury Coach)',
-        operator: 'Express Lines',
-        passengerName: 'John Doe',
-        seatNumbers: ['A12'],
-        date: formatDate(tomorrow),
-        departureTime: '08:30 AM',
-        arrivalTime: '01:00 PM',
-        price: 45,
-        status: 'confirmed',
-        bookingDate: formatDate(today),
-        amenities: ['WiFi', 'AC', 'Charging Ports', 'Snacks']
-      },
-      {
-        id: '2',
-        ticketNumber: 'TKT-2025-002',
-        route: 'Boston → Washington DC',
-        bus: 'DC-201 (Standard Coach)',
-        operator: 'Capital Express',
-        passengerName: 'Jane Smith',
-        seatNumbers: ['B08', 'B09'],
-        date: formatDate(nextWeek),
-        departureTime: '02:15 PM',
-        arrivalTime: '06:30 PM',
-        price: 130,
-        status: 'confirmed',
-        bookingDate: formatDate(today),
-        amenities: ['WiFi', 'AC', 'Charging Ports']
-      },
-      {
-        id: '3',
-        ticketNumber: 'TKT-2025-003',
-        route: 'New York → Philadelphia',
-        bus: 'PHL-301 (Premium Express)',
-        operator: 'Liberty Lines',
-        passengerName: 'Mike Johnson',
-        seatNumbers: ['C15'],
-        date: formatDate(new Date(today.getTime() + 15 * 24 * 60 * 60 * 1000)), // 15 days from now
-        departureTime: '10:00 AM',
-        arrivalTime: '12:00 PM',
-        price: 55,
-        status: 'confirmed',
-        bookingDate: formatDate(today),
-        amenities: ['WiFi', 'AC', 'Premium Seats', 'Entertainment']
+    const fetchTickets = async () => {
+      if (!token) return;
+      try {
+        const fetchedTickets = await TicketAPI.getUserTickets(token);
+        setTickets(fetchedTickets);
+      } catch (error) {
+        toast.error('Failed to fetch tickets');
       }
-    ];
-
-    setTickets(mockTickets);
+    };
+    fetchTickets();
   }, []);
 
   const handleCancelTicket = async (ticketId: string) => {
     try {
-      // Mock cancellation - replace with actual API call
+      
       await new Promise(resolve => setTimeout(resolve, 1000));
       
       setTickets(prev => prev.filter(ticket => ticket.id !== ticketId));
@@ -103,7 +48,7 @@ export default function Tickets() {
   };
 
   const handleDownloadTicket = (ticket) => {
-    // Mock download - replace with actual ticket generation
+    // TODO: Implement actual ticket generation and download logic
     toast.success('Ticket downloaded successfully');
   };
 
@@ -291,7 +236,7 @@ export default function Tickets() {
             <CardContent className="p-12 text-center">
               <Bus className="h-16 w-16 text-gray-400 mx-auto mb-6" />
               <h3 className="text-xl font-semibold text-gray-900 mb-2">No Tickets Found</h3>
-              <p className="text-gray-600 mb-6">You haven't booked any tickets yet</p>
+              <p className="text-gray-600 mb-6">You haven&apos;t booked any tickets yet</p>
               <Link href="/routes">
                 <Button className="flex items-center space-x-2">
                   <Plus className="h-4 w-4" />

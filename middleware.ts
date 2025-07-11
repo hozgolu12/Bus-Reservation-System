@@ -3,7 +3,8 @@ import type { NextRequest } from 'next/server';
 
 export function middleware(request: NextRequest) {
   const token = request.cookies.get('token')?.value;
-  const { pathname } = request.url;
+  const { pathname } = new URL(request.url);
+  const normalizedPathname = pathname === '/' ? '/' : pathname.replace(/\/$/, '');
 
   // Public routes that don't require authentication
   const publicRoutes = ['/', '/login', '/register'];
@@ -14,12 +15,12 @@ export function middleware(request: NextRequest) {
   const userRoutes = ['/account'];
 
   // Check if route is public
-  if (publicRoutes.includes(pathname)) {
+  if (publicRoutes.includes(normalizedPathname)) {
     return NextResponse.next();
   }
 
-  // Redirect to login if no token
-  if (!token) {
+  // Redirect to login if no token and not already on login page
+  if (!token && normalizedPathname !== '/login') {
     return NextResponse.redirect(new URL('/login', request.url));
   }
 

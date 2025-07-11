@@ -48,63 +48,8 @@ export default function ManageUsers() {
       if (!token) return;
       
       try {
-        // Mock data for now - replace with actual API call
-        const mockUsers = [
-          {
-            id: '1',
-            username: 'john_doe',
-            email: 'john@example.com',
-            role: 'user',
-            isActive: true,
-            dateJoined: '2025-01-15',
-            lastLogin: '2025-07-08',
-            totalBookings: 12
-          },
-          {
-            id: '2',
-            username: 'jane_smith',
-            email: 'jane@example.com',
-            role: 'user',
-            isActive: false,
-            dateJoined: '2025-02-20',
-            lastLogin: '2025-07-05',
-            totalBookings: 8
-          },
-          {
-            id: '3',
-            username: 'metro_express',
-            email: 'admin@metroexpress.com',
-            role: 'operator',
-            isActive: true,
-            dateJoined: '2025-01-10',
-            lastLogin: '2025-07-09',
-            totalBookings: 0,
-            companyName: 'Metro Express Lines'
-          },
-          {
-            id: '4',
-            username: 'city_transport',
-            email: 'contact@citytransport.com',
-            role: 'operator',
-            isActive: true,
-            dateJoined: '2025-03-05',
-            lastLogin: '2025-07-07',
-            totalBookings: 0,
-            companyName: 'City Transport Co.'
-          },
-          {
-            id: '5',
-            username: 'mike_wilson',
-            email: 'mike@example.com',
-            role: 'user',
-            isActive: true,
-            dateJoined: '2025-06-01',
-            lastLogin: '2025-07-09',
-            totalBookings: 3
-          }
-        ];
-        
-        setUsers(mockUsers);
+        const fetchedUsers = await AdminAPI.getAllUsers(token, currentPage, searchTerm);
+        setUsers(fetchedUsers.results);
       } catch (error) {
         toast.error('Failed to fetch users');
       } finally {
@@ -117,6 +62,7 @@ export default function ManageUsers() {
 
   const handleBlockUser = async (userId: string) => {
     try {
+      await AdminAPI.blockUser(token, userId);
       setUsers(prev => prev.map(u => 
         u.id === userId ? { ...u, isActive: false } : u
       ));
@@ -128,6 +74,7 @@ export default function ManageUsers() {
 
   const handleUnblockUser = async (userId: string) => {
     try {
+      await AdminAPI.unblockUser(token, userId);
       setUsers(prev => prev.map(u => 
         u.id === userId ? { ...u, isActive: true } : u
       ));

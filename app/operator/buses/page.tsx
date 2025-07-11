@@ -68,66 +68,11 @@ export default function ManageBuses() {
       if (!token) return;
       
       try {
-        // Mock data for now - replace with actual API calls
-        const mockBuses = [
-          {
-            id: '1',
-            bus_number: 'NYC-101',
-            type: 'Luxury Coach',
-            operator: 'Metro Express Lines',
-            total_seats: 40,
-            available_seats: 25,
-            departure_time: '08:30',
-            arrival_time: '13:00',
-            price: 45,
-            rating: 4.5,
-            amenities: ['WiFi', 'AC', 'Charging Ports', 'Snacks'],
-            route: 'NYC → Boston',
-            route_id: '1',
-            is_active: true
-          },
-          {
-            id: '2',
-            bus_number: 'NYC-102',
-            type: 'Standard Coach',
-            operator: 'Metro Express Lines',
-            total_seats: 35,
-            available_seats: 18,
-            departure_time: '10:15',
-            arrival_time: '14:45',
-            price: 40,
-            rating: 4.2,
-            amenities: ['WiFi', 'AC', 'Charging Ports'],
-            route: 'NYC → Boston',
-            route_id: '1',
-            is_active: true
-          },
-          {
-            id: '3',
-            bus_number: 'PHL-301',
-            type: 'Premium Express',
-            operator: 'Metro Express Lines',
-            total_seats: 30,
-            available_seats: 12,
-            departure_time: '11:00',
-            arrival_time: '13:00',
-            price: 35,
-            rating: 4.6,
-            amenities: ['WiFi', 'AC', 'Premium Seats'],
-            route: 'NYC → Philadelphia',
-            route_id: '3',
-            is_active: true
-          }
-        ];
-
-        const mockRoutes = [
-          { id: '1', name: 'NYC → Boston' },
-          { id: '2', name: 'NYC → Washington DC' },
-          { id: '3', name: 'NYC → Philadelphia' }
-        ];
+        const fetchedBuses = await OperatorAPI.getMyBuses(token);
+        const fetchedRoutes = await OperatorAPI.getMyRoutes(token);
         
-        setBuses(mockBuses);
-        setRoutes(mockRoutes);
+        setBuses(fetchedBuses);
+        setRoutes(fetchedRoutes);
       } catch (error) {
         toast.error('Failed to fetch buses');
       } finally {
@@ -175,6 +120,7 @@ export default function ManageBuses() {
 
   const handleDeleteBus = async (busId: string) => {
     try {
+      await OperatorAPI.deleteBus(token, busId);
       setBuses(prev => prev.filter(bus => bus.id !== busId));
       toast.success('Bus deleted successfully');
     } catch (error) {

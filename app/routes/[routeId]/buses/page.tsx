@@ -23,110 +23,25 @@ export default function Buses() {
   }, [user, router]);
 
   useEffect(() => {
-    // Mock data - replace with actual API call
-    const routes = {
-      '1': {
-        id: '1',
-        name: 'NYC Express',
-        source: 'New York',
-        destination: 'Boston',
-        distance: '215 miles',
-        duration: '4h 30m'
-      },
-      '2': {
-        id: '2',
-        name: 'Capital Corridor',
-        source: 'New York',
-        destination: 'Washington DC',
-        distance: '225 miles',
-        duration: '4h 15m'
-      },
-      '3': {
-        id: '3',
-        name: 'Liberty Line',
-        source: 'New York',
-        destination: 'Philadelphia',
-        distance: '95 miles',
-        duration: '2h 00m'
+    
+    const fetchRouteAndBuses = async () => {
+      if (!token) return;
+
+      try {
+        const allRoutes = await OperatorAPI.getMyRoutes(token);
+        const currentRoute = allRoutes.find((r: any) => r.id === params.routeId);
+        setRoute(currentRoute);
+
+        const allBuses = await OperatorAPI.getMyBuses(token);
+        const busesForRoute = allBuses.filter((bus: any) => bus.route_id === params.routeId);
+        setBuses(busesForRoute);
+      } catch (error) {
+        console.error("Failed to fetch route or buses:", error);
+        // Handle error, e.g., show a toast message
       }
     };
 
-    const busesData = {
-      '1': [
-        {
-          id: '101',
-          busNumber: 'NYC-101',
-          type: 'Luxury Coach',
-          departureTime: '08:30 AM',
-          arrivalTime: '01:00 PM',
-          availableSeats: 25,
-          totalSeats: 40,
-          price: '$45',
-          rating: 4.5,
-          amenities: ['WiFi', 'AC', 'Charging Ports', 'Snacks', 'Reclining Seats'],
-          operator: 'Express Lines'
-        },
-        {
-          id: '102',
-          busNumber: 'NYC-102',
-          type: 'Standard Coach',
-          departureTime: '10:15 AM',
-          arrivalTime: '02:45 PM',
-          availableSeats: 18,
-          totalSeats: 35,
-          price: '$40',
-          rating: 4.2,
-          amenities: ['WiFi', 'AC', 'Charging Ports'],
-          operator: 'City Transport'
-        },
-        {
-          id: '103',
-          busNumber: 'NYC-103',
-          type: 'Premium Express',
-          departureTime: '02:30 PM',
-          arrivalTime: '07:00 PM',
-          availableSeats: 12,
-          totalSeats: 30,
-          price: '$55',
-          rating: 4.8,
-          amenities: ['WiFi', 'AC', 'Charging Ports', 'Snacks', 'Entertainment', 'Premium Seats'],
-          operator: 'Premium Travel'
-        }
-      ],
-      '2': [
-        {
-          id: '201',
-          busNumber: 'DC-201',
-          type: 'Luxury Coach',
-          departureTime: '09:00 AM',
-          arrivalTime: '01:15 PM',
-          availableSeats: 20,
-          totalSeats: 40,
-          price: '$55',
-          rating: 4.4,
-          amenities: ['WiFi', 'AC', 'Charging Ports', 'Snacks', 'Reclining Seats'],
-          operator: 'Capital Express'
-        }
-      ],
-      '3': [
-        {
-          id: '301',
-          busNumber: 'PHL-301',
-          type: 'Standard Coach',
-          departureTime: '11:00 AM',
-          arrivalTime: '01:00 PM',
-          availableSeats: 30,
-          totalSeats: 35,
-          price: '$35',
-          rating: 4.6,
-          amenities: ['WiFi', 'AC', 'Charging Ports'],
-          operator: 'Liberty Lines'
-        }
-      ]
-    };
-
-    setRoute(routes[params.routeId as string]);
-    setBuses(busesData[params.routeId as string] || []);
+    fetchRouteAndBuses();
   }, [params.routeId]);
 
   const getAmenityIcon = (amenity: string) => {

@@ -41,7 +41,7 @@ services:
       sh -c "python manage.py migrate &&
              python manage.py runserver 0.0.0.0:8000"
 
-  # NestJS Routes API
+  # NestJS Routes API (existing)
   nestjs-api:
     build:
       context: ./backend/nestjs-routes-api
@@ -65,6 +65,98 @@ services:
       - bus_network
     command: npm run start:dev
 
+  # API Gateway (new)
+  api-gateway:
+    build:
+      context: ./backend/api-gateway/api-gateway
+      dockerfile: Dockerfile
+    container_name: api_gateway
+    ports:
+      - "3002:3002" # Assuming a port for the API Gateway
+    depends_on:
+      - django-api
+      - nestjs-api
+      - bookings-service
+      - buses-service
+      - routes-service
+      - users-service
+    volumes:
+      - ./backend/api-gateway/api-gateway:/usr/src/app
+      - /usr/src/app/node_modules
+    networks:
+      - bus_network
+    command: npm run start:dev # Assuming this is the start command
+
+  # Bookings Service (new)
+  bookings-service:
+    build:
+      context: ./backend/bookings-service
+      dockerfile: Dockerfile
+    container_name: bookings_service
+    ports:
+      - "8001:8001" # Assuming a port for bookings service
+    depends_on:
+      - postgres
+    volumes:
+      - ./backend/bookings-service:/app
+    networks:
+      - bus_network
+    command: >
+      sh -c "python manage.py migrate &&
+             python manage.py runserver 0.0.0.0:8001"
+
+  # Buses Service (new)
+  buses-service:
+    build:
+      context: ./backend/buses-service/buses-service
+      dockerfile: Dockerfile
+    container_name: buses_service
+    ports:
+      - "3003:3003" # Assuming a port for buses service
+    depends_on:
+      - postgres
+    volumes:
+      - ./backend/buses-service/buses-service:/usr/src/app
+      - /usr/src/app/node_modules
+    networks:
+      - bus_network
+    command: npm run start:dev # Assuming this is the start command
+
+  # Routes Service (new)
+  routes-service:
+    build:
+      context: ./backend/routes-service/routes-service
+      dockerfile: Dockerfile
+    container_name: routes_service
+    ports:
+      - "3004:3004" # Assuming a port for routes service
+    depends_on:
+      - postgres
+    volumes:
+      - ./backend/routes-service/routes-service:/usr/src/app
+      - /usr/src/app/node_modules
+    networks:
+      - bus_network
+    command: npm run start:dev # Assuming this is the start command
+
+  # Users Service (new)
+  users-service:
+    build:
+      context: ./backend/users-service
+      dockerfile: Dockerfile
+    container_name: users_service
+    ports:
+      - "8002:8002" # Assuming a port for users service
+    depends_on:
+      - postgres
+    volumes:
+      - ./backend/users-service:/app
+    networks:
+      - bus_network
+    command: >
+      sh -c "python manage.py migrate &&
+             python manage.py runserver 0.0.0.0:8002"
+
   # Next.js Frontend
   frontend:
     build:
@@ -74,16 +166,15 @@ services:
     ports:
       - "3000:3000"
     depends_on:
-      - django-api
-      - nestjs-api
+      - api-gateway # Frontend should depend on the API Gateway
     volumes:
       - .:/app
       - /app/node_modules
     networks:
       - bus_network
     environment:
-      - NEXT_PUBLIC_DJANGO_API_URL=http://localhost:8000
-      - NEXT_PUBLIC_NESTJS_API_URL=http://localhost:3001
+      # Frontend should communicate with the API Gateway
+      - NEXT_PUBLIC_API_GATEWAY_URL=http://api-gateway:3002
 
 volumes:
   postgres_data:
